@@ -9,44 +9,32 @@ import {
 } from 'lucide-react';
 
 const PRESET_IMAGES = [
-  { name: '📱 Smartphone', url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=400&fit=crop' },
-  { name: '💻 Laptop', url: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop' },
-  { name: '🎧 Headphones', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop' },
-  { name: '👟 Shoes', url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop' },
-  { name: '👕 Fashion', url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&h=400&fit=crop' },
-  { name: '⌚ Smartwatch', url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop' },
-  { name: '🧴 Beauty', url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=400&fit=crop' },
-  { name: '🍳 Kitchen', url: 'https://images.unsplash.com/photo-1583778176476-4a8b02a64c01?w=400&h=400&fit=crop' }
+  // Home & Kitchen / Appliances
+  { name: '❄️ Split AC', category: 'Home & Kitchen', url: 'https://images.unsplash.com/photo-1614633837748-c2721210151f?w=600&h=600&fit=crop' },
+  { name: '🧊 Refrigerator', category: 'Home & Kitchen', url: 'https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=600&h=600&fit=crop' },
+  { name: '🧺 Washing Machine', category: 'Home & Kitchen', url: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=600&h=600&fit=crop' },
+  { name: '🍲 Microwave Oven', category: 'Home & Kitchen', url: 'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=600&h=600&fit=crop' },
+  { name: '🍳 Kitchen Appliances', category: 'Home & Kitchen', url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&h=600&fit=crop' },
+  
+  // Electronics
+  { name: '📱 Smartphone', category: 'Electronics', url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&h=600&fit=crop' },
+  { name: '💻 Laptop', category: 'Electronics', url: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&h=600&fit=crop' },
+  { name: '📺 Smart TV', category: 'Electronics', url: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=600&h=600&fit=crop' },
+  { name: '🎧 Headphones', category: 'Electronics', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop' },
+  { name: '⌚ Smartwatch', category: 'Electronics', url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop' },
+  
+  // Fashion
+  { name: '👟 Shoes', category: 'Fashion', url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&h=600&fit=crop' },
+  { name: '👕 Fashion Clothing', category: 'Fashion', url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&h=600&fit=crop' },
+  
+  // Other standard categories
+  { name: '📚 Books', category: 'Books', url: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=600&h=600&fit=crop' },
+  { name: '🎮 Gaming', category: 'Gaming', url: 'https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?w=600&h=600&fit=crop' },
+  { name: '💄 Beauty', category: 'Beauty', url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=600&fit=crop' },
+  { name: '🏋️ Sports & Fitness', category: 'Sports', url: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&h=600&fit=crop' },
+  { name: '🥑 Grocery', category: 'Grocery', url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=600&fit=crop' },
+  { name: '🧸 Toys & Baby', category: 'Toys & Baby', url: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600&h=600&fit=crop' },
 ];
-
-async function compressImageFile(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (e) => {
-      const img = new Image();
-      img.src = e.target.result;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        const max = 500;
-        if (width > height && width > max) {
-          height = Math.round((height * max) / width);
-          width = max;
-        } else if (height > max) {
-          width = Math.round((width * max) / height);
-          height = max;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.75));
-      };
-    };
-  });
-}
 
 export function AdminPage({ navigate }) {
   const { user, isAdmin, allUsers, fetchUsers } = useAuth();
@@ -139,7 +127,7 @@ export function AdminPage({ navigate }) {
 
     await addProduct({
       ...newProd,
-      images: [newProd.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop']
+      images: [newProd.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop']
     });
 
     setShowAddModal(false);
@@ -493,14 +481,14 @@ export function AdminPage({ navigate }) {
       {/* ADD PRODUCT MODAL */}
       {showAddModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#FFF', width: '100%', maxWidth: 540, borderRadius: 10, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#FFF', width: '100%', maxWidth: 560, borderRadius: 10, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>Add New Product</h2>
             <form onSubmit={handleAddSubmit}>
               <div style={{ marginBottom: 12 }}>
                 <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>Product Title</label>
                 <input 
                   type="text" required 
-                  placeholder="e.g. Apple iPhone 16 Pro 256GB"
+                  placeholder="e.g. Apple iPhone 16 Pro 256GB or Voltas 1.5 Ton AC"
                   value={newProd.name}
                   onChange={(e) => setNewProd({ ...newProd, name: e.target.value })}
                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 6 }}
@@ -513,7 +501,7 @@ export function AdminPage({ navigate }) {
                   <select 
                     value={newProd.category} 
                     onChange={(e) => setNewProd({ ...newProd, category: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 6 }}
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 6, fontWeight: 600 }}
                   >
                     {categories.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                   </select>
@@ -522,7 +510,7 @@ export function AdminPage({ navigate }) {
                   <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>Brand</label>
                   <input 
                     type="text" 
-                    placeholder="e.g. Apple, Samsung, Nike"
+                    placeholder="e.g. Apple, Samsung, Voltas, LG"
                     value={newProd.brand}
                     onChange={(e) => setNewProd({ ...newProd, brand: e.target.value })}
                     style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 6 }}
@@ -570,14 +558,31 @@ export function AdminPage({ navigate }) {
                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 6, marginBottom: 8 }}
                 />
 
-                <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>Or pick a preset:</div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
+                  Quick Preset Images (Click to Auto-fill URL & Category):
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', maxHeight: 140, overflowY: 'auto', padding: '6px', background: '#F9FAFB', borderRadius: 6, border: '1px solid #E5E7EB' }}>
                   {PRESET_IMAGES.map(img => (
                     <button 
                       key={img.name}
                       type="button"
-                      onClick={() => setNewProd({ ...newProd, image: img.url })}
-                      style={{ fontSize: 11, padding: '4px 8px', borderRadius: 4, border: '1px solid #D1D5DB', background: '#F9FAFB', cursor: 'pointer' }}
+                      onClick={() => setNewProd({ 
+                        ...newProd, 
+                        image: img.url,
+                        category: img.category || newProd.category 
+                      })}
+                      style={{ 
+                        fontSize: 11, 
+                        padding: '4px 8px', 
+                        borderRadius: 4, 
+                        border: '1px solid #D1D5DB', 
+                        background: '#FFF', 
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}
                     >
                       {img.name}
                     </button>
@@ -597,7 +602,7 @@ export function AdminPage({ navigate }) {
       {/* EDIT PRODUCT MODAL */}
       {showEditModal && editProd && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#FFF', width: '100%', maxWidth: 540, borderRadius: 10, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#FFF', width: '100%', maxWidth: 560, borderRadius: 10, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>Edit Product ({editProd.id})</h2>
             <form onSubmit={handleEditSubmit}>
               <div style={{ marginBottom: 12 }}>
@@ -616,7 +621,7 @@ export function AdminPage({ navigate }) {
                   <select 
                     value={editProd.category} 
                     onChange={(e) => setEditProd({ ...editProd, category: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 6 }}
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 6, fontWeight: 600 }}
                   >
                     {categories.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                   </select>
@@ -670,6 +675,34 @@ export function AdminPage({ navigate }) {
                   onChange={(e) => setEditProd({ ...editProd, image: e.target.value })}
                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 6, marginBottom: 8 }}
                 />
+
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
+                  Quick Preset Images (Click to replace image):
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', maxHeight: 140, overflowY: 'auto', padding: '6px', background: '#F9FAFB', borderRadius: 6, border: '1px solid #E5E7EB' }}>
+                  {PRESET_IMAGES.map(img => (
+                    <button 
+                      key={img.name}
+                      type="button"
+                      onClick={() => setEditProd({ 
+                        ...editProd, 
+                        image: img.url,
+                        category: img.category || editProd.category
+                      })}
+                      style={{ 
+                        fontSize: 11, 
+                        padding: '4px 8px', 
+                        borderRadius: 4, 
+                        border: '1px solid #D1D5DB', 
+                        background: '#FFF', 
+                        cursor: 'pointer',
+                        fontWeight: 600
+                      }}
+                    >
+                      {img.name}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 24 }}>
@@ -683,3 +716,5 @@ export function AdminPage({ navigate }) {
     </div>
   );
 }
+
+export default AdminPage;
