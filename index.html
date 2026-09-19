@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KartHub.com - Online Shopping for Electronics, Fashion, Home & More</title>
+  <meta name="description" content="KartHub.com - Your favorite online shopping destination. Shop electronics, fashion, home & kitchen, books, beauty, sports and more at best prices. Free delivery, easy returns." />
+  <meta name="keywords" content="online shopping, electronics, fashion, home, kitchen, books, KartHub" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="/karthub-favicon.svg" />
+  <link rel="stylesheet" href="/src/styles/variables.css" />
+  <link rel="stylesheet" href="/src/styles/base.css" />
+  <link rel="stylesheet" href="/src/styles/components.css" />
+  <link rel="stylesheet" href="/src/styles/layout.css" />
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+  <script>
+    // Force-hide Netlify badge via CSS
+    var s = document.createElement('style');
+    s.textContent = '[href*="netlify"],[class*="netlify"],[id*="netlify"],[data-testid*="netlify"]{display:none!important;visibility:hidden!important;height:0!important;width:0!important;overflow:hidden!important;position:absolute!important;pointer-events:none!important;}';
+    document.head.appendChild(s);
+
+    new MutationObserver(function(mutations) {
+      mutations.forEach(function(m) {
+        m.addedNodes.forEach(function(node) {
+          if (node.nodeType === 1) {
+            var t = (node.textContent || '').toLowerCase();
+            var h = (node.innerHTML || '').toLowerCase();
+            if (t.includes('netlify') || h.includes('netlify') || t.includes('powered by')) {
+              node.remove();
+              return;
+            }
+            node.querySelectorAll && node.querySelectorAll('a[href*="netlify"], [class*="netlify"], [id*="netlify"]').forEach(function(el) { el.closest('div,section,aside') ? el.closest('div,section,aside').remove() : el.remove(); });
+          }
+        });
+      });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KartHub — Database Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0F172A;
+      --card-bg: #1E293B;
+      --border: #334155;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --primary: #FF9900;
+      --primary-hover: #E68A00;
+      --accent: #38BDF8;
+      --success: #10B981;
+      --code-bg: #0B1120;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 32px 20px;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .logo-area { display: flex; align-items: center; gap: 14px; }
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #FF9900, #FF5E00);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+      box-shadow: 0 4px 15px rgba(255, 153, 0, 0.3);
+    }
+    .title { font-size: 24px; font-weight: 800; }
+    .subtitle { color: var(--text-muted); font-size: 14px; }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: var(--stat-color, var(--primary));
+    }
+    .stat-title { font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .stat-value { font-size: 32px; font-weight: 800; margin: 6px 0; font-family: 'JetBrains Mono', monospace; }
+    .stat-desc { font-size: 12px; color: var(--text-muted); }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--text); }
+    .tab-btn.active {
+      background: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+      font-weight: 700;
+    }
+    .badge {
+      background: rgba(0,0,0,0.15);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .tab-btn.active .badge { background: rgba(0,0,0,0.25); color: #000; }
+
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .search-input {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      min-width: 280px;
+      font-family: inherit;
+    }
+    .search-input:focus { outline: none; border-color: var(--primary); }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .data-table th {
+      background: rgba(0,0,0,0.2);
+      color: var(--text-muted);
+      text-align: left;
+      padding: 12px 16px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .data-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    .code-pill {
+      background: var(--code-bg);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .product-thumb {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: #fff;
+      padding: 2px;
+    }
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .status-processing { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+    .status-shipped { background: rgba(56, 189, 248, 0.15); color: #38BDF8; }
+    .status-delivered { background: rgba(16, 185, 129, 0.15); color: #34D399; }
+
+    pre {
+      background: var(--code-bg);
+      padding: 20px;
+      border-radius: 12px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #A5B4FC;
+      border: 1px solid var(--border);
+    }
+    .btn {
+      background: var(--primary);
+      color: #000;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { background: var(--primary-hover); }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.05); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-area">
+        <div class="logo-icon">🗄️</div>
+        <div>
+          <h1 class="title">KartHub Database Explorer</h1>
+          <p class="subtitle">Clean visual inspector for catalog, users, orders & SQL schemas</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <a href="../index.html" class="btn btn-secondary">🌐 Open Storefront</a>
+        <button class="btn" id="export-json-btn">⬇️ Export Full DB JSON</button>
+      </div>
+    </header>
+
+    <!-- Overview Stats -->
+    <div class="stats-grid">
+      <div class="stat-card" style="--stat-color: #FF9900;">
+        <div class="stat-title">Products in Catalog</div>
+        <div class="stat-value" id="stat-products">55</div>
+        <div class="stat-desc">Across 10 categories</div>
+      </div>
+      <div class="stat-card" style="--stat-color: #38BDF8;">
+        <div class="stat-title">Customer Orders</div>
+        <div class="stat-value" id="stat-orders">1</div>
+        <div class="stat-desc">Tracked in database</div>
+      </div>
+      <div class="stat-card" style="--stat-color: #10B981;">
+        <div class="stat-title">Registered Users</div>
+        <div class="stat-value" id="stat-users">2</div>
+        <div class="stat-desc">Customers & Admin accounts</div>
+      </div>
+      <div class="stat-card" style="--stat-color: #A855F7;">
+        <div class="stat-title">Categories</div>
+        <div class="stat-value" id="stat-categories">10</div>
+        <div class="stat-desc">Full e-commerce taxonomy</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" data-tab="products">📦 Products Table <span class="badge" id="badge-products">55</span></button>
+      <button class="tab-btn" data-tab="orders">📑 Orders Table <span class="badge" id="badge-orders">1</span></button>
+      <button class="tab-btn" data-tab="users">👥 Users Table <span class="badge" id="badge-users">2</span></button>
+      <button class="tab-btn" data-tab="categories">🏷️ Categories Table <span class="badge" id="badge-categories">10</span></button>
+      <button class="tab-btn" data-tab="schema">📜 SQL Schema (schema.sql)</button>
+    </div>
+
+    <!-- Content Area -->
+    <div class="table-container">
+      <div class="table-header">
+        <h3 id="table-title" style="font-size:18px;font-weight:700;">Products Collection</h3>
+        <input type="text" id="search-input" class="search-input" placeholder="🔍 Search records..." />
+      </div>
+      <div id="table-content" style="overflow-x:auto;">
+        <!-- Dynamic table content -->
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { products } from '../src/data/products.js';
+    import { categories } from '../src/data/categories.js';
+
+    let orders = JSON.parse(localStorage.getItem('karthub_db_orders') || '[]');
+    if (orders.length === 0) {
+      orders = [
+        {
+          id: 'ORD1001',
+          customerName: 'Demo User',
+          customerEmail: 'demo@karthub.com',
+          items: [{ name: 'Samsung Galaxy S24 Ultra', qty: 1, price: 74999 }],
+          total: 74999,
+          paymentMethod: 'UPI',
+          status: 'Delivered',
+          date: '2026-03-01T14:20:00Z'
+        }
+      ];
+    }
+
+    let users = JSON.parse(localStorage.getItem('karthub_db_users') || '[]');
+    if (users.length === 0) {
+      users = [
+        { id: 'USR_ADMIN_01', name: 'Bharath Kumar (Admin)', email: 'bharathkumaraiwork@gmail.com', phone: '+91 9876543210', role: 'admin' },
+        { id: 'USR_DEMO_02', name: 'Demo User', email: 'demo@karthub.com', phone: '+91 9876500000', role: 'customer' }
+      ];
+    }
+
+    let activeTab = 'products';
+    let searchQuery = '';
+
+    const sqlSchema = `-- ============================================
+-- KartHub E-Commerce Database Schema
+-- Compatible with PostgreSQL, MySQL, and SQLite
+-- ============================================
+
+CREATE TABLE users (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    role VARCHAR(20) DEFAULT 'customer',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE products (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    brand VARCHAR(100) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    subcategory VARCHAR(50),
+    price DECIMAL(10, 2) NOT NULL,
+    original_price DECIMAL(10, 2),
+    discount_percentage INT DEFAULT 0,
+    rating DECIMAL(2, 1) DEFAULT 4.0,
+    stock INT DEFAULT 50
+);
+
+CREATE TABLE orders (
+    id VARCHAR(50) PRIMARY KEY,
+    user_id VARCHAR(50) REFERENCES users(id),
+    customer_name VARCHAR(100) NOT NULL,
+    customer_email VARCHAR(100) NOT NULL,
+    total DECIMAL(10, 2) NOT NULL,
+    payment_method VARCHAR(50) NOT NULL,
+    status VARCHAR(30) DEFAULT 'Processing',
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);`;
+
+    function updateStats() {
+      document.getElementById('stat-products').textContent = products.length;
+      document.getElementById('stat-orders').textContent = orders.length;
+      document.getElementById('stat-users').textContent = users.length;
+      document.getElementById('stat-categories').textContent = categories.length;
+
+      document.getElementById('badge-products').textContent = products.length;
+      document.getElementById('badge-orders').textContent = orders.length;
+      document.getElementById('badge-users').textContent = users.length;
+      document.getElementById('badge-categories').textContent = categories.length;
+    }
+
+    function renderView() {
+      const container = document.getElementById('table-content');
+      const searchBox = document.getElementById('search-input');
+      const title = document.getElementById('table-title');
+      searchBox.style.display = activeTab === 'schema' ? 'none' : 'block';
+
+      if (activeTab === 'products') {
+        title.textContent = `Products Collection (${products.length} items)`;
+        const filtered = products.filter(p => 
+          p.name.toLowerCase().includes(searchQuery) ||
+          p.brand.toLowerCase().includes(searchQuery) ||
+          p.category.toLowerCase().includes(searchQuery) ||
+          p.id.toLowerCase().includes(searchQuery)
+        );
+
+        container.innerHTML = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>ID</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Brand</th>
+                <th>Price</th>
+                <th>Discount</th>
+                <th>Rating</th>
+                <th>Stock</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(p => `
+                <tr>
+                  <td><img src="${p.images?.[0] || p.image}" class="product-thumb" alt="" onerror="this.src='https://via.placeholder.com/42'" /></td>
+                  <td><span class="code-pill">${p.id}</span></td>
+                  <td style="font-weight:600;max-width:300px;">${p.name}</td>
+                  <td><span style="color:#38BDF8;">${p.category}</span></td>
+                  <td><strong>${p.brand}</strong></td>
+                  <td style="font-weight:700;color:#34D399;">₹${p.price.toLocaleString('en-IN')}</td>
+                  <td><span style="color:#F87171;">${p.discount}% OFF</span></td>
+                  <td>⭐ ${p.rating}</td>
+                  <td><span class="status-badge status-delivered">${p.stock || 50} in stock</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } else if (activeTab === 'orders') {
+        title.textContent = `Orders Collection (${orders.length} orders)`;
+        const filtered = orders.filter(o => 
+          o.id.toLowerCase().includes(searchQuery) ||
+          (o.customerName || '').toLowerCase().includes(searchQuery) ||
+          (o.status || '').toLowerCase().includes(searchQuery)
+        );
+
+        container.innerHTML = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Payment</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(o => `
+                <tr>
+                  <td><span class="code-pill">${o.id}</span></td>
+                  <td style="color:#94A3B8;">${new Date(o.date || o.createdAt || Date.now()).toLocaleDateString('en-IN')}</td>
+                  <td><strong>${o.customerName || o.address?.name || 'Customer'}</strong><div style="font-size:11px;color:#94A3B8;">${o.customerEmail || ''}</div></td>
+                  <td>${(o.items || []).map(i => `${i.name} (x${i.qty})`).join(', ') || '1 item'}</td>
+                  <td style="font-weight:700;color:#34D399;">₹${Number(o.total).toLocaleString('en-IN')}</td>
+                  <td><span class="code-pill">${o.paymentMethod || 'UPI'}</span></td>
+                  <td><span class="status-badge status-${(o.status || 'processing').toLowerCase()}">${o.status || 'Processing'}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } else if (activeTab === 'users') {
+        title.textContent = `Users Collection (${users.length} accounts)`;
+        const filtered = users.filter(u => 
+          u.name.toLowerCase().includes(searchQuery) ||
+          u.email.toLowerCase().includes(searchQuery) ||
+          u.id.toLowerCase().includes(searchQuery)
+        );
+
+        container.innerHTML = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(u => `
+                <tr>
+                  <td><span class="code-pill">${u.id}</span></td>
+                  <td><strong>${u.name}</strong></td>
+                  <td style="color:#38BDF8;">${u.email}</td>
+                  <td style="color:#94A3B8;">${u.phone || '—'}</td>
+                  <td><span class="status-badge ${u.role === 'admin' ? 'status-processing' : 'status-shipped'}">${u.role || 'customer'}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } else if (activeTab === 'categories') {
+        title.textContent = `Categories Collection (${categories.length} categories)`;
+        container.innerHTML = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Category ID</th>
+                <th>Name</th>
+                <th>Icon</th>
+                <th>Image Preview</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${categories.map(c => `
+                <tr>
+                  <td><span class="code-pill">${c.id}</span></td>
+                  <td style="font-weight:700;">${c.name}</td>
+                  <td><span style="font-size:18px;">${c.icon}</span></td>
+                  <td><img src="${c.image}" class="product-thumb" alt="" /></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } else if (activeTab === 'schema') {
+        title.textContent = `SQL Relational Schema (database/schema.sql)`;
+        container.innerHTML = `<pre><code>${sqlSchema}</code></pre>`;
+      }
+    }
+
+    // Tabs listener
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeTab = btn.dataset.tab;
+        renderView();
+      });
+    });
+
+    // Search listener
+    document.getElementById('search-input')?.addEventListener('input', (e) => {
+      searchQuery = e.target.value.toLowerCase();
+      renderView();
+    });
+
+    // Export Full JSON
+    document.getElementById('export-json-btn')?.addEventListener('click', () => {
+      const fullDB = {
+        meta: { name: 'KartHub Database', exportedAt: new Date().toISOString() },
+        products,
+        categories,
+        orders,
+        users
+      };
+      const blob = new Blob([JSON.stringify(fullDB, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(a);
+      a.download = 'karthub_full_database.json';
+      a.click();
+    });
+
+    updateStats();
+    renderView();
+  </script>
+</body>
+</html>

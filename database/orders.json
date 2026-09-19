@@ -1,0 +1,84 @@
+[
+  {
+    "id": "ORD178979036797539O8",
+    "delivery": 0,
+    "total": 134990,
+    "items": [
+      {
+        "originalPrice": 149900,
+        "brand": "Apple",
+        "id": "ELEC003",
+        "name": "Apple MacBook Air M3 Chip (15-inch, 16GB, 512GB SSD) — Midnight",
+        "qty": 1,
+        "seller": "KartHub Electronics",
+        "price": 134990,
+        "image": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop"
+      }
+    ],
+    "paymentMethod": "cod",
+    "estimatedDelivery": "2026-09-24T03:59:27.975Z",
+    "status": "Processing",
+    "date": "2026-09-19T03:59:27.975Z",
+    "userId": "USR1789790344114",
+    "subtotal": 134990,
+    "address": {
+      "state": "Andhra Pradesh",
+      "id": "ADDR1789790357988",
+      "pincode": "524005",
+      "phone": "346454846",
+      "address": "Jayavnwj",
+      "name": "hayaj",
+      "city": "Nellore Rural"
+    },
+    "customerEmail": "hayaj@gamil.com",
+    "createdAt": "2026-09-19T03:59:27.976Z",
+    "customerName": "hayaj",
+    "discount": 14910,
+    "timestamp": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1789790370,
+      "nanoseconds": 803000000
+    }
+  },
+  {
+    "id": "ORD1789789460809W9E4",
+    "delivery": 0,
+    "address": {
+      "name": "bharathreddysrikolanu28",
+      "city": "Nellore",
+      "phone": "06304505750",
+      "state": "Andhra Pradesh",
+      "address": "Manubolu",
+      "id": "ADDR1789789457553",
+      "pincode": "524405"
+    },
+    "timestamp": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1789789462,
+      "nanoseconds": 201000000
+    },
+    "customerName": "bharathreddysrikolanu28",
+    "paymentMethod": "upi",
+    "subtotal": 22990,
+    "createdAt": "2026-09-19T03:44:20.809Z",
+    "items": [
+      {
+        "id": "ELEC004",
+        "brand": "Sony",
+        "originalPrice": 34990,
+        "name": "Sony WH-1000XM5 Wireless Noise Cancelling Headphones (Black)",
+        "seller": "Sony Official Store",
+        "image": "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400&h=400&fit=crop",
+        "price": 22990,
+        "qty": 1
+      }
+    ],
+    "total": 22990,
+    "date": "2026-09-19T03:44:20.809Z",
+    "userId": "USR1789789452224",
+    "status": "Processing",
+    "estimatedDelivery": "2026-09-24T03:44:20.809Z",
+    "customerEmail": "bharathreddysrikolanu28@gmail.com",
+    "discount": 12000
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "USR1789660222554",
+    "name": "Bharath Reddy (Admin)",
+    "role": "admin",
+    "phone": "06304505750",
+    "createdAt": "2026-09-17T15:50:22.554Z",
+    "email": "bharathkumaraiwork@gmail.com"
+  },
+  {
+    "id": "USR1789747385030",
+    "phone": "9949901716",
+    "name": "Kiran",
+    "createdAt": "2026-09-18T16:03:05.030Z",
+    "updatedAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1789747388,
+      "nanoseconds": 2000000
+    },
+    "email": "kiran@gmail.com",
+    "role": "customer"
+  }
+]

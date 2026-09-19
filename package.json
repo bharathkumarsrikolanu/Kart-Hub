@@ -1,0 +1,31 @@
+{
+  "name": "karthub",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:mem": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node server/server.js",
+    "seed:mongo": "node server/seed/seedMongoDB.js",
+    "start": "node server/server.js"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.2.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.1",
+    "express": "^5.2.1",
+    "firebase": "^12.19.0",
+    "lucide-react": "^1.47.0",
+    "mongoose": "^9.10.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  }
+}
