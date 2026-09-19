@@ -3,35 +3,18 @@ import { products as initialProducts } from '../data/products.js';
 
 const ProductContext = createContext();
 
-// API base URL — points to Express/MongoDB backend
-const API_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || '';
+// Relative API base URL — works everywhere (local dev via proxy & production Render)
+const API_URL = '';
 
 const sanitizeProduct = (p) => {
   if (!p) return p;
-  let images = Array.isArray(p.images) ? [...p.images] : (p.image ? [p.image] : []);
   
-  if (p.id === 'HOME009') {
-    images = [
-      'https://images.unsplash.com/photo-1614633837748-c2721210151f?w=600&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1585338107529-13afc5f02586?w=600&h=600&fit=crop'
-    ];
-  } else if (p.id === 'HOME010') {
-    images = [
-      'https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=600&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=600&h=600&fit=crop'
-    ];
-  } else if (p.id === 'HOME011') {
-    images = [
-      'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=600&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=600&h=600&fit=crop'
-    ];
-  } else if (p.id === 'HOME012') {
-    images = [
-      'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=600&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=600&h=600&fit=crop'
-    ];
-  }
+  // Keep whatever image the product currently has (from MongoDB, admin edits, or initial catalog)
+  let images = Array.isArray(p.images) && p.images.length > 0 
+    ? [...p.images] 
+    : (p.image ? [p.image] : []);
 
+  // Filter out any known bad/broken placeholder IDs if any
   images = images.filter(url => typeof url === 'string' && !url.includes('1527011046414') && !url.includes('1628744448840'));
 
   if (images.length === 0) {
@@ -70,10 +53,13 @@ export function ProductProvider({ children }) {
     }
   };
 
-  // Fetch products from MongoDB backend
+  // Fetch live products directly from MongoDB backend
   const fetchProductsFromApi = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/products`);
+      setLoading(true);
+      const res = await fetch(`${API_URL}/api/products`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.data && Array.isArray(json.data) && json.data.length > 0) {
@@ -84,7 +70,9 @@ export function ProductProvider({ children }) {
         }
       }
     } catch (e) {
-      console.warn('API products fetch notice:', e.message);
+      console.warn('MongoDB products fetch notice:', e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,7 +84,7 @@ export function ProductProvider({ children }) {
     const sellingPrice = Number(newProd.price) || 999;
     const origPrice = Number(newProd.originalPrice) || sellingPrice;
     const calculatedDiscount = origPrice > sellingPrice ? Math.round(((origPrice - sellingPrice) / origPrice) * 100) : 0;
-    const imgUrl = newProd.image || (Array.isArray(newProd.images) && newProd.images[0]) || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop';
+    const imgUrl = newProd.image || (Array.isArray(newProd.images) && newProd.images[0]) || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop';
 
     const prod = {
       ...newProd,
@@ -121,7 +109,7 @@ export function ProductProvider({ children }) {
     setProducts(updatedList);
     saveToLocalCache(updatedList);
 
-    // Add to MongoDB via API
+    // Persist to MongoDB permanently via REST API
     try {
       await fetch(`${API_URL}/api/products`, {
         method: 'POST',
@@ -143,7 +131,12 @@ export function ProductProvider({ children }) {
     const sellingPrice = updatedFields.price !== undefined ? Number(updatedFields.price) : current.price;
     const origPrice = updatedFields.originalPrice !== undefined ? Number(updatedFields.originalPrice) : (current.originalPrice || sellingPrice);
     const calculatedDiscount = origPrice > sellingPrice ? Math.round(((origPrice - sellingPrice) / origPrice) * 100) : 0;
-    const finalImage = updatedFields.image || (Array.isArray(updatedFields.images) && updatedFields.images[0]) || current.image;
+    
+    // Explicitly preserve the new image if provided
+    const finalImage = updatedFields.image !== undefined ? updatedFields.image : current.image;
+    const finalImages = updatedFields.image 
+      ? [updatedFields.image] 
+      : (Array.isArray(updatedFields.images) && updatedFields.images.length > 0 ? updatedFields.images : current.images || [finalImage]);
 
     const updated = {
       ...current,
@@ -152,7 +145,7 @@ export function ProductProvider({ children }) {
       originalPrice: origPrice,
       discount: updatedFields.discount !== undefined ? Number(updatedFields.discount) : calculatedDiscount,
       image: finalImage,
-      images: updatedFields.image ? [updatedFields.image] : (updatedFields.images || current.images || [finalImage]),
+      images: finalImages,
       updatedAt: new Date().toISOString()
     };
 
@@ -160,7 +153,7 @@ export function ProductProvider({ children }) {
     setProducts(newProductList);
     saveToLocalCache(newProductList);
 
-    // Update in MongoDB via API
+    // Persist permanently in MongoDB Atlas
     try {
       await fetch(`${API_URL}/api/products/${encodeURIComponent(id)}`, {
         method: 'PUT',
@@ -179,7 +172,7 @@ export function ProductProvider({ children }) {
     setProducts(newProductList);
     saveToLocalCache(newProductList);
 
-    // Delete from MongoDB via API
+    // Delete permanently from MongoDB Atlas
     try {
       await fetch(`${API_URL}/api/products/${encodeURIComponent(id)}`, {
         method: 'DELETE'
