@@ -9,29 +9,13 @@ import {
 } from 'lucide-react';
 
 const PRESET_IMAGES = [
-  // Home & Kitchen / Appliances
-  { name: '❄️ Split AC', category: 'Home & Kitchen', url: 'https://images.unsplash.com/photo-1614633837748-c2721210151f?w=600&h=600&fit=crop' },
-  { name: '🧊 Refrigerator', category: 'Home & Kitchen', url: 'https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=600&h=600&fit=crop' },
-  { name: '🧺 Washing Machine', category: 'Home & Kitchen', url: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=600&h=600&fit=crop' },
-  { name: '🍲 Microwave Oven', category: 'Home & Kitchen', url: 'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=600&h=600&fit=crop' },
-  { name: '🍳 Kitchen Appliances', category: 'Home & Kitchen', url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&h=600&fit=crop' },
-  
-  // Electronics
-  { name: '📱 Smartphone', category: 'Electronics', url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&h=600&fit=crop' },
-  { name: '💻 Laptop', category: 'Electronics', url: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&h=600&fit=crop' },
-  { name: '📺 Smart TV', category: 'Electronics', url: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=600&h=600&fit=crop' },
-  { name: '🎧 Headphones', category: 'Electronics', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop' },
-  { name: '⌚ Smartwatch', category: 'Electronics', url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop' },
-  
-  // Fashion
-  { name: '👟 Shoes', category: 'Fashion', url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&h=600&fit=crop' },
-  { name: '👕 Fashion Clothing', category: 'Fashion', url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&h=600&fit=crop' },
-  
-  // Other standard categories
+  { name: '📱 Electronics', category: 'Electronics', url: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&h=600&fit=crop' },
+  { name: '👕 Fashion', category: 'Fashion', url: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&h=600&fit=crop' },
+  { name: '🏠 Home & Kitchen', category: 'Home & Kitchen', url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&h=600&fit=crop' },
   { name: '📚 Books', category: 'Books', url: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=600&h=600&fit=crop' },
   { name: '🎮 Gaming', category: 'Gaming', url: 'https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?w=600&h=600&fit=crop' },
-  { name: '💄 Beauty', category: 'Beauty', url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=600&fit=crop' },
-  { name: '🏋️ Sports & Fitness', category: 'Sports', url: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&h=600&fit=crop' },
+  { name: '💄 Beauty', category: 'Beauty', url: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&h=600&fit=crop' },
+  { name: '🏋️ Sports', category: 'Sports', url: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&h=600&fit=crop' },
   { name: '🥑 Grocery', category: 'Grocery', url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=600&fit=crop' },
   { name: '🧸 Toys & Baby', category: 'Toys & Baby', url: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600&h=600&fit=crop' },
 ];
