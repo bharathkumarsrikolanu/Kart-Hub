@@ -74,12 +74,12 @@ export const quadrantCollections = [
     items: [
       {
         title: 'Air Conditioners',
-        image: 'https://images.unsplash.com/photo-1585338107529-13afc5f02586?w=300&h=300&fit=crop',
+        image: 'https://images.unsplash.com/photo-1628744448840-55bdb2497bd4?w=300&h=300&fit=crop',
         category: 'Home & Kitchen',
       },
       {
         title: 'Refrigerators',
-        image: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=300&h=300&fit=crop',
+        image: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=300&h=300&fit=crop',
         category: 'Home & Kitchen',
       },
       {
