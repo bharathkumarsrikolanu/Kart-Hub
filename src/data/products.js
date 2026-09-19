@@ -524,8 +524,8 @@ const baseProductsCatalog = [
     rating: 4.5,
     reviewCount: 11420,
     images: [
-      'https://images.unsplash.com/photo-1628744448840-55bdb2497bd4?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1527011046414-4781f1f94f8c?w=400&h=400&fit=crop'
+      'https://images.unsplash.com/photo-1614633837748-c2721210151f?w=600&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1585338107529-13afc5f02586?w=600&h=600&fit=crop'
     ],
     description: 'Voltas 1.5 Ton 5 Star Inverter Split AC with high ambient cooling up to 52°C, 4-in-1 adjustable cooling mode, and 100% copper condenser.',
     features: ['1.5 Ton Capacity', '5 Star Energy Rating', 'Variable Speed Inverter', '4-in-1 Adjustable Mode', 'Anti-Dust Filter', '10 Year Compressor Warranty'],
@@ -545,8 +545,8 @@ const baseProductsCatalog = [
     rating: 4.6,
     reviewCount: 9830,
     images: [
-      'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=400&h=400&fit=crop'
+      'https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=600&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=600&h=600&fit=crop'
     ],
     description: 'Samsung 236 Litres Double Door Refrigerator with Digital Inverter Technology, All-Around Cooling, and Toughened Glass Shelves.',
     features: ['236L Capacity', 'Frost Free Double Door', 'Digital Inverter Compressor', 'All-Around Cooling', 'Movable Ice Maker', '20 Year Compressor Warranty'],
