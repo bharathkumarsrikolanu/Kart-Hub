@@ -120,7 +120,13 @@ export function HomePage({ navigate }) {
                   <div 
                     key={i} 
                     className="quadrant-item"
-                    onClick={() => navigate(`/category/${encodeURIComponent(item.category)}`)}
+                    onClick={() => {
+                      if (item.productId) {
+                        navigate(`/product/${item.productId}`);
+                      } else {
+                        navigate(`/category/${encodeURIComponent(item.category)}`);
+                      }
+                    }}
                   >
                     <div className="quadrant-item-img">
                       <img src={item.image} alt={item.title} loading="lazy" />
