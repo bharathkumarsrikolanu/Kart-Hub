@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProducts } from '../context/ProductContext.jsx';
 import { ProductCard } from '../components/ProductCard.jsx';
-import { bannerSlides, quadrantCollections } from '../data/deals.js';
+import { bannerSlides } from '../data/deals.js';
 import { ChevronLeft, ChevronRight, Zap, Clock, Sparkles, TrendingUp, Tag } from 'lucide-react';
 
 export function HomePage({ navigate }) {
@@ -109,42 +109,7 @@ export function HomePage({ navigate }) {
         </div>
       </div>
 
-      <div className="container" style={{ maxWidth: '1480px', margin: '0 auto', padding: '0 16px' }}>
-        {/* Amazon-style 4-Quadrant Feature Cards */}
-        <div className="quadrant-grid">
-          {quadrantCollections.map(quad => (
-            <div key={quad.id} className="quadrant-card">
-              <h2 className="quadrant-title">{quad.title}</h2>
-              <div className="quadrant-items">
-                {quad.items.map((item, i) => (
-                  <div 
-                    key={i} 
-                    className="quadrant-item"
-                    onClick={() => {
-                      if (item.productId) {
-                        navigate(`/product/${item.productId}`);
-                      } else {
-                        navigate(`/category/${encodeURIComponent(item.category)}`);
-                      }
-                    }}
-                  >
-                    <div className="quadrant-item-img">
-                      <img src={item.image} alt={item.title} loading="lazy" />
-                    </div>
-                    <span className="quadrant-item-label">{item.title}</span>
-                  </div>
-                ))}
-              </div>
-              <a 
-                href={quad.link}
-                onClick={(e) => { e.preventDefault(); navigate(quad.link.replace('#', '')); }}
-                className="quadrant-link"
-              >
-                {quad.linkText} →
-              </a>
-            </div>
-          ))}
-        </div>
+      <div className="container" style={{ maxWidth: '1480px', margin: '0 auto', padding: '0 16px', marginTop: '20px' }}>
 
         {/* Lightning Deals */}
         <section className="section">
