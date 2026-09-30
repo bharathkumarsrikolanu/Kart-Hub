@@ -108,15 +108,108 @@ export function AuthProvider({ children }) {
     return { success: true, user: newUser };
   };
 
-  // Check for SSO callback query params on page load & hashchange
+  // Check for SSO callback & Google OAuth popup tokens on page load & hashchange
   useEffect(() => {
-    const handleSSOParams = () => {
+    // 1. Listen for cross-window auth events (when popup logs in)
+    const handleAuthMessage = (e) => {
+      if (e.data && e.data.type === 'GOOGLE_AUTH_SUCCESS' && e.data.user) {
+        console.log('🎉 Received user from Google popup:', e.data.user);
+        setUser(e.data.user);
+        fetchUsers();
+        window.location.hash = '#/account';
+      }
+    };
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'karthub_user' && e.newValue) {
+        try {
+          const updatedUser = JSON.parse(e.newValue);
+          if (updatedUser) {
+            setUser(updatedUser);
+            fetchUsers();
+            window.location.hash = '#/account';
+          }
+        } catch {}
+      }
+    };
+
+    window.addEventListener('message', handleAuthMessage);
+    window.addEventListener('storage', handleStorageChange);
+
+    // 2. Check if current window received Google access token or SSO params
+    const handleOAuthParams = () => {
       try {
         const fullUrl = window.location.href;
         const hash = window.location.hash || '';
         const search = window.location.search || '';
 
-        // Extract query params from both search and hash
+        // Case A: Google OAuth Popup redirect (#access_token=... or #iss=...&access_token=...)
+        if (hash.includes('access_token=')) {
+          const cleanHash = hash.replace(/^#/, '');
+          const hashParams = new URLSearchParams(cleanHash);
+          const accessToken = hashParams.get('access_token');
+
+          if (accessToken) {
+            console.log('🔑 Found Google access token in URL! Fetching profile...');
+            fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            })
+              .then((res) => res.json())
+              .then(async (googleProfile) => {
+                if (googleProfile.email) {
+                  const email = googleProfile.email.toLowerCase().trim();
+                  const name = googleProfile.name || email.split('@')[0];
+                  const avatar = googleProfile.picture || '';
+                  const googleId = googleProfile.sub || '';
+
+                  let finalUser = null;
+                  try {
+                    const apiRes = await fetch('/api/auth/google', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email, name, avatar, googleId })
+                    });
+                    const apiJson = await apiRes.json();
+                    if (apiJson.user) finalUser = apiJson.user;
+                  } catch {}
+
+                  if (!finalUser) {
+                    finalUser = {
+                      id: 'USR_G_' + Date.now(),
+                      name,
+                      email,
+                      avatar,
+                      role: email === ADMIN_EMAIL ? 'admin' : 'customer',
+                      authProvider: 'google',
+                      externalId: googleId
+                    };
+                  }
+
+                  // Store locally
+                  localStorage.setItem('karthub_user', JSON.stringify(finalUser));
+                  setUser(finalUser);
+
+                  // If this is a popup, notify parent window and auto-close!
+                  if (window.opener && window.opener !== window) {
+                    try {
+                      window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', user: finalUser }, '*');
+                    } catch {}
+                    window.close();
+                    return;
+                  }
+
+                  // Clean up URL hash
+                  window.location.hash = '#/account';
+                }
+              })
+              .catch((err) => {
+                console.error('Google profile fetch error:', err);
+              });
+            return;
+          }
+        }
+
+        // Case B: BeSuperMind / BuddhaCEO SSO Callback (?sso_success=true or ?error=...)
         let queryStr = '';
         if (hash.includes('?')) {
           queryStr = hash.split('?')[1];
@@ -130,7 +223,7 @@ export function AuthProvider({ children }) {
 
         if (queryStr) {
           const params = new URLSearchParams(queryStr);
-          
+
           // Check for SSO errors
           const errorMsg = params.get('error') || params.get('error_description');
           if (errorMsg) {
@@ -158,20 +251,24 @@ export function AuthProvider({ children }) {
                 console.log('✅ SSO User successfully logged in:', parsedUser);
                 setUser(parsedUser);
                 fetchUsers();
-                // Clean up hash/URL to clean account page
                 window.location.hash = '#/account';
               }
             }
           }
         }
       } catch (e) {
-        console.warn('SSO Param parsing notice:', e.message);
+        console.warn('OAuth Param parsing notice:', e.message);
       }
     };
 
-    handleSSOParams();
-    window.addEventListener('hashchange', handleSSOParams);
-    return () => window.removeEventListener('hashchange', handleSSOParams);
+    handleOAuthParams();
+    window.addEventListener('hashchange', handleOAuthParams);
+
+    return () => {
+      window.removeEventListener('message', handleAuthMessage);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('hashchange', handleOAuthParams);
+    };
   }, []);
 
   const signInWithBeSuperMind = async (orgSlug = 'bceo') => {

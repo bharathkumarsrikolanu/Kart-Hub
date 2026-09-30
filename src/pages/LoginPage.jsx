@@ -126,9 +126,20 @@ export function LoginPage({ query, navigate }) {
         setSsoLoading(null);
       }
     } else if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
-    } else {
-      alert('Google Sign-In SDK is still loading. Please check your internet connection and refresh.');
+      try {
+        window.google.accounts.id.prompt();
+        return;
+      } catch {}
+    }
+
+    // Direct OAuth Popup fallback (guaranteed to work instantly even if SDK script is blocked or delayed!)
+    setSsoLoading('google');
+    const redirectOrigin = window.location.origin;
+    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleClientId)}&redirect_uri=${encodeURIComponent(redirectOrigin)}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
+    const popup = window.open(oauthUrl, 'Google_Sign_In', 'width=500,height=600');
+    if (!popup) {
+      alert('Please allow popups for this site to sign in with Google.');
+      setSsoLoading(null);
     }
   };
 
