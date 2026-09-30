@@ -37,19 +37,57 @@ export function LoginPage({ query, navigate }) {
     }
   };
 
+  // Initialize Google Identity Services (GIS) on mount
+  React.useEffect(() => {
+    const googleClientId = '31259564562-k8bskvd1gnk0f8ch3acv1cv3h5pheu46.apps.googleusercontent.com';
+    if (window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async (response) => {
+            if (response?.credential) {
+              try {
+                const base64Url = response.credential.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
+                  return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                const profile = JSON.parse(jsonPayload);
+                if (profile.email) {
+                  const res = await signInWithGoogle({
+                    email: profile.email,
+                    name: profile.name || profile.email.split('@')[0],
+                    avatar: profile.picture || '',
+                    googleId: profile.sub || ''
+                  });
+                  showToast(`🎉 Welcome, ${res.user.name}!`, 'success');
+                  navigate('/account');
+                }
+              } catch (jwtErr) {
+                console.error('Failed to parse Google credential:', jwtErr);
+              }
+            }
+          }
+        });
+      } catch (initErr) {
+        console.warn('GIS Init notice:', initErr);
+      }
+    }
+  }, []);
+
   const handleGoogleSignInClick = () => {
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '31259564562-k8bskvd1gnk0f8ch3acv1cv3h5pheu46.apps.googleusercontent.com';
+    const googleClientId = '31259564562-k8bskvd1gnk0f8ch3acv1cv3h5pheu46.apps.googleusercontent.com';
 
     if (window.google?.accounts?.oauth2) {
       try {
         setSsoLoading('google');
         const tokenClient = window.google.accounts.oauth2.initTokenClient({
           client_id: googleClientId,
-          scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
+          scope: 'email profile openid',
           prompt: 'select_account',
           callback: async (tokenResponse) => {
             if (tokenResponse.error) {
-              showToast(`Google Sign-In: ${tokenResponse.error}`, 'error');
+              alert(`Google Sign-In notice: ${tokenResponse.error} ${tokenResponse.error_description || ''}`);
               setSsoLoading(null);
               return;
             }
@@ -72,7 +110,7 @@ export function LoginPage({ query, navigate }) {
                   navigate('/account');
                 }
               } catch (err) {
-                showToast('Failed to fetch Google profile', 'error');
+                alert(`Failed to fetch Google profile: ${err.message}`);
               } finally {
                 setSsoLoading(null);
               }
@@ -84,16 +122,13 @@ export function LoginPage({ query, navigate }) {
         tokenClient.requestAccessToken({ prompt: 'select_account' });
         return;
       } catch (e) {
-        console.warn('Google OAuth token client error:', e);
+        alert(`Google OAuth error: ${e.message}`);
+        setSsoLoading(null);
       }
-    }
-
-    // Direct OAuth Popup fallback URL
-    const redirectOrigin = window.location.origin;
-    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleClientId)}&redirect_uri=${encodeURIComponent(redirectOrigin)}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
-    const popup = window.open(oauthUrl, 'Google_Sign_In', 'width=500,height=600');
-    if (!popup) {
-      showToast('Please allow popups to sign in with Google.', 'error');
+    } else if (window.google?.accounts?.id) {
+      window.google.accounts.id.prompt();
+    } else {
+      alert('Google Sign-In SDK is still loading. Please check your internet connection and refresh.');
     }
   };
 
