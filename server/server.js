@@ -346,32 +346,45 @@ app.post('/api/auth/google', async (req, res) => {
 
 async function handleBeSuperMindStart(req, res) {
   try {
-    const { orgSlug = process.env.PARTNER_ORG_SLUG || 'bceo', state } = req.body;
-    const clientId = process.env.PARTNER_CLIENT_ID || 'j2e4giinene26vrig6i51';
-    const redirectUri = process.env.PARTNER_REDIRECT_URI || 'http://localhost:5000/api/auth/callback';
+    const { orgSlug = process.env.PARTNER_ORG_SLUG || 'bceo', state } = req.body || {};
+    let clientId = process.env.PARTNER_CLIENT_ID || 'bs4vogedbbvswhgxvpnrv';
+    if (clientId === 'j2e4giinene26vrig6i51' || !clientId) clientId = 'bs4vogedbbvswhgxvpnrv';
+
+    let clientSecret = process.env.LOGTO_CLIENT_SECRET || 'Xpaq7KjOZog9FsfPHS2BRW5sPVLKtCc6';
+    if (clientSecret === 'placeholder_secret_here' || !clientSecret) clientSecret = 'Xpaq7KjOZog9FsfPHS2BRW5sPVLKtCc6';
+
+    const logtoEndpoint = process.env.LOGTO_ENDPOINT || 'https://5mjf80.logto.app';
+    const audience = process.env.LOGTO_API_AUDIENCE || 'https://api.besupermind.com/v3';
     const backendApiUrl = process.env.BACKEND_API_URL || 'https://lbse6s6n81.execute-api.ap-south-1.amazonaws.com';
+    
+    // Auto-detect redirect URI based on request host or env
+    const host = req.get('host') || '';
+    const isRender = host.includes('render.com') || host.includes('karthub') || process.env.RENDER;
+    const redirectUri = (process.env.PARTNER_REDIRECT_URI && !process.env.PARTNER_REDIRECT_URI.includes('5000')) 
+      ? process.env.PARTNER_REDIRECT_URI 
+      : (isRender ? 'https://kart-hub.onrender.com/api/auth/callback' : 'http://localhost:5173/api/auth/callback');
 
-    // If client secret is configured and not placeholder, call live BeSuperMind Start API
-    if (process.env.LOGTO_CLIENT_SECRET && process.env.LOGTO_CLIENT_SECRET !== 'placeholder_secret_here') {
-      try {
-        const response = await fetch(`${backendApiUrl}/api/v3/identity/login/start`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orgSlug,
-            clientId,
-            redirectUri,
-            ...(state ? { state } : {})
-          })
-        });
+    // Call live BeSuperMind Start API
+    try {
+      console.log('🚀 Initiating BeSuperMind SSO with:', { orgSlug, clientId, redirectUri, backendApiUrl });
+      const response = await fetch(`${backendApiUrl}/api/v3/identity/login/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orgSlug,
+          clientId,
+          redirectUri,
+          ...(state ? { state } : {})
+        })
+      });
 
-        const payload = await response.json();
-        if (response.ok && payload?.data?.redirectUrl) {
-          return res.json({ success: true, data: payload.data });
-        }
-      } catch (fetchErr) {
-        console.warn('⚠️ BeSuperMind remote start warning:', fetchErr.message);
+      const payload = await response.json();
+      console.log('📥 BeSuperMind start response:', response.status, payload);
+      if (response.ok && payload?.data?.redirectUrl) {
+        return res.json({ success: true, data: payload.data });
       }
+    } catch (fetchErr) {
+      console.warn('⚠️ BeSuperMind remote start warning:', fetchErr.message);
     }
 
     // Dev/Sandbox Fallback for seamless local testing
@@ -450,14 +463,23 @@ app.get('/api/auth/callback', async (req, res) => {
       return res.redirect(`${frontendUrl}/#/?error=Missing%20authorization%20code`);
     }
 
+    const host = req.get('host') || '';
+    const isRender = host.includes('render.com') || host.includes('karthub') || process.env.RENDER;
     const logtoEndpoint = process.env.LOGTO_ENDPOINT || 'https://5mjf80.logto.app';
-    const clientId = process.env.PARTNER_CLIENT_ID;
-    const clientSecret = process.env.LOGTO_CLIENT_SECRET;
-    const redirectUri = process.env.PARTNER_REDIRECT_URI || 'http://localhost:5000/api/auth/callback';
+    let clientId = process.env.PARTNER_CLIENT_ID || 'bs4vogedbbvswhgxvpnrv';
+    if (clientId === 'j2e4giinene26vrig6i51' || !clientId) clientId = 'bs4vogedbbvswhgxvpnrv';
+
+    let clientSecret = process.env.LOGTO_CLIENT_SECRET || 'Xpaq7KjOZog9FsfPHS2BRW5sPVLKtCc6';
+    if (clientSecret === 'placeholder_secret_here' || !clientSecret) clientSecret = 'Xpaq7KjOZog9FsfPHS2BRW5sPVLKtCc6';
+
+    const redirectUri = (process.env.PARTNER_REDIRECT_URI && !process.env.PARTNER_REDIRECT_URI.includes('5000')) 
+      ? process.env.PARTNER_REDIRECT_URI 
+      : (isRender ? 'https://kart-hub.onrender.com/api/auth/callback' : 'http://localhost:5173/api/auth/callback');
     const audience = process.env.LOGTO_API_AUDIENCE || 'https://api.besupermind.com/v3';
     const backendApiUrl = process.env.BACKEND_API_URL || 'https://lbse6s6n81.execute-api.ap-south-1.amazonaws.com';
 
     // 1. Exchange authorization code for tokens
+    console.log('🔄 Exchanging auth code with Logto...', { clientId, redirectUri });
     const tokenRes = await fetch(`${logtoEndpoint}/oidc/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

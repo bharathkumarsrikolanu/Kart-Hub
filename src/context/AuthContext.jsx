@@ -121,6 +121,7 @@ export function AuthProvider({ children }) {
           if (userParam) {
             const parsedUser = JSON.parse(decodeURIComponent(userParam));
             setUser(parsedUser);
+            fetchUsers();
             // Clean up hash/URL
             window.location.hash = '#/account';
           }
