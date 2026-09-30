@@ -494,19 +494,24 @@ app.get('/api/auth/callback', async (req, res) => {
     });
 
     const tokens = await tokenRes.json();
+    console.log('📥 Logto token exchange result:', tokenRes.status, tokens.access_token ? 'TOKEN_RECEIVED' : tokens);
     if (!tokenRes.ok || !tokens.access_token) {
       const errMsg = tokens.error_description || tokens.error || 'Token exchange failed';
+      console.warn('❌ Token exchange failed:', errMsg);
       return res.redirect(`${frontendUrl}/#/?error=${encodeURIComponent(errMsg)}`);
     }
 
     // 2. Fetch User Profile from BeSuperMind
+    console.log('📡 Fetching user profile from BeSuperMind AWS...');
     const userRes = await fetch(`${backendApiUrl}/api/v3/user/me`, {
       headers: { Authorization: `Bearer ${tokens.access_token}` }
     });
 
     const userPayload = await userRes.json();
+    console.log('👤 User/me response:', userRes.status, userPayload);
     if (!userRes.ok || !userPayload.data) {
-      return res.redirect(`${frontendUrl}/#/?error=Unable%20to%20load%20profile`);
+      console.warn('❌ Profile fetch failed:', userPayload);
+      return res.redirect(`${frontendUrl}/#/?error=${encodeURIComponent(userPayload?.error?.message || 'Unable to load profile')}`);
     }
 
     const profile = userPayload.data;

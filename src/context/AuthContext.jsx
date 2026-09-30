@@ -108,28 +108,70 @@ export function AuthProvider({ children }) {
     return { success: true, user: newUser };
   };
 
-  // Check for SSO callback query params on page load
+  // Check for SSO callback query params on page load & hashchange
   useEffect(() => {
-    try {
-      const hash = window.location.hash || '';
-      const search = window.location.search || '';
-      const combined = hash.includes('?') ? hash.split('?')[1] : search.replace(/^\?/, '');
-      if (combined) {
-        const params = new URLSearchParams(combined);
-        if (params.get('sso_success') === 'true') {
-          const userParam = params.get('user');
-          if (userParam) {
-            const parsedUser = JSON.parse(decodeURIComponent(userParam));
-            setUser(parsedUser);
-            fetchUsers();
-            // Clean up hash/URL
-            window.location.hash = '#/account';
+    const handleSSOParams = () => {
+      try {
+        const fullUrl = window.location.href;
+        const hash = window.location.hash || '';
+        const search = window.location.search || '';
+
+        // Extract query params from both search and hash
+        let queryStr = '';
+        if (hash.includes('?')) {
+          queryStr = hash.split('?')[1];
+        } else if (search) {
+          queryStr = search.replace(/^\?/, '');
+        }
+
+        if (!queryStr && fullUrl.includes('?')) {
+          queryStr = fullUrl.split('?')[1].split('#')[0];
+        }
+
+        if (queryStr) {
+          const params = new URLSearchParams(queryStr);
+          
+          // Check for SSO errors
+          const errorMsg = params.get('error') || params.get('error_description');
+          if (errorMsg) {
+            console.error('⚠️ SSO Login Error from server:', errorMsg);
+            alert(`SSO Login notice: ${decodeURIComponent(errorMsg)}`);
+            window.location.hash = '#/login';
+            return;
+          }
+
+          if (params.get('sso_success') === 'true') {
+            const rawUser = params.get('user');
+            if (rawUser) {
+              let parsedUser = null;
+              try {
+                parsedUser = JSON.parse(rawUser);
+              } catch {
+                try {
+                  parsedUser = JSON.parse(decodeURIComponent(rawUser));
+                } catch (pe) {
+                  console.error('Failed to parse user JSON:', pe);
+                }
+              }
+
+              if (parsedUser && parsedUser.email) {
+                console.log('✅ SSO User successfully logged in:', parsedUser);
+                setUser(parsedUser);
+                fetchUsers();
+                // Clean up hash/URL to clean account page
+                window.location.hash = '#/account';
+              }
+            }
           }
         }
+      } catch (e) {
+        console.warn('SSO Param parsing notice:', e.message);
       }
-    } catch (e) {
-      console.warn('SSO Param parsing notice:', e.message);
-    }
+    };
+
+    handleSSOParams();
+    window.addEventListener('hashchange', handleSSOParams);
+    return () => window.removeEventListener('hashchange', handleSSOParams);
   }, []);
 
   const signInWithBeSuperMind = async (orgSlug = 'bceo') => {
