@@ -1,10 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { dbSaveCart, dbSaveWishlist } from '../services/db.js';
 import { getCartUserId } from '../store.js';
+import { useAuth } from './AuthContext.jsx';
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
+  const { user } = useAuth();
+  const userId = user ? (user.id || user._id || user.email) : getCartUserId();
+
   const [cart, setCart] = useState(() => {
     try {
       const saved = localStorage.getItem('karthub_cart');
@@ -25,25 +29,91 @@ export function CartProvider({ children }) {
 
   const [toasts, setToasts] = useState([]);
 
+  // 1. Listen for cross-tab cart updates
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'karthub_cart' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setCart(parsed);
+          }
+        } catch {}
+      }
+      if (e.key === 'karthub_wishlist' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setWishlist(parsed);
+          }
+        } catch {}
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // 2. Fetch & merge user cart from MongoDB Atlas whenever user logs in or mounts
+  useEffect(() => {
+    let isMounted = true;
+    const syncCloudCart = async () => {
+      if (!userId) return;
+      try {
+        const res = await fetch(`/api/cart/${encodeURIComponent(userId)}`);
+        const json = await res.json();
+        if (json?.success && Array.isArray(json.data) && isMounted) {
+          if (json.data.length > 0) {
+            setCart((prev) => {
+              // Merge cloud items with any local items
+              const merged = [...json.data];
+              prev.forEach((localItem) => {
+                const existing = merged.find((m) => m.id === localItem.id);
+                if (existing) {
+                  existing.quantity = Math.max(
+                    Number(existing.quantity || existing.qty || 1),
+                    Number(localItem.quantity || localItem.qty || 1)
+                  );
+                  existing.qty = existing.quantity;
+                } else {
+                  merged.push(localItem);
+                }
+              });
+              localStorage.setItem('karthub_cart', JSON.stringify(merged));
+              return merged;
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('MongoDB cloud cart sync notice:', err.message);
+      }
+    };
+
+    syncCloudCart();
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
+
+  // 3. Save cart to localStorage & MongoDB on change
   useEffect(() => {
     try {
       localStorage.setItem('karthub_cart', JSON.stringify(cart));
-      const uid = getCartUserId();
-      if (uid) {
-        dbSaveCart(uid, cart);
+      if (userId) {
+        dbSaveCart(userId, cart);
       }
     } catch {}
-  }, [cart]);
+  }, [cart, userId]);
 
+  // 4. Save wishlist to localStorage & MongoDB on change
   useEffect(() => {
     try {
       localStorage.setItem('karthub_wishlist', JSON.stringify(wishlist));
-      const uid = getCartUserId();
-      if (uid) {
-        dbSaveWishlist(uid, wishlist);
+      if (userId) {
+        dbSaveWishlist(userId, wishlist);
       }
     } catch {}
-  }, [wishlist]);
+  }, [wishlist, userId]);
 
   const showToast = (message, type = 'success') => {
     const id = Date.now() + Math.random();
