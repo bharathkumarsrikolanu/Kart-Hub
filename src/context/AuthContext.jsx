@@ -6,6 +6,32 @@ const ADMIN_EMAIL = 'bharathkumaraiwork@gmail.com';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
+    // 1. Synchronously inspect URL for SSO callback user payload on cold mount
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const hash = window.location.hash || '';
+      let hashParams = null;
+      if (hash.includes('?')) {
+        hashParams = new URLSearchParams(hash.split('?')[1]);
+      }
+      const rawUser = searchParams.get('user') || hashParams?.get('user');
+      const isSsoSuccess = (searchParams.get('sso_success') === 'true') || (hashParams?.get('sso_success') === 'true');
+      if (isSsoSuccess && rawUser) {
+        let parsed = null;
+        try {
+          parsed = JSON.parse(rawUser);
+        } catch {
+          parsed = JSON.parse(decodeURIComponent(rawUser));
+        }
+        if (parsed && parsed.email) {
+          localStorage.setItem('karthub_user', JSON.stringify(parsed));
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Initial auth parse error:', e);
+    }
+
     try {
       const saved = localStorage.getItem('karthub_user');
       return saved ? JSON.parse(saved) : null;
@@ -19,8 +45,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (user) {
       localStorage.setItem('karthub_user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('karthub_user');
     }
   }, [user]);
 
@@ -235,8 +259,8 @@ export function AuthProvider({ children }) {
 
           if (params.get('sso_success') === 'true') {
             const rawUser = params.get('user');
+            let parsedUser = null;
             if (rawUser) {
-              let parsedUser = null;
               try {
                 parsedUser = JSON.parse(rawUser);
               } catch {
@@ -246,13 +270,19 @@ export function AuthProvider({ children }) {
                   console.error('Failed to parse user JSON:', pe);
                 }
               }
+            } else {
+              try {
+                const stored = localStorage.getItem('karthub_user');
+                if (stored) parsedUser = JSON.parse(stored);
+              } catch {}
+            }
 
-              if (parsedUser && parsedUser.email) {
-                console.log('✅ SSO User successfully logged in:', parsedUser);
-                setUser(parsedUser);
-                fetchUsers();
-                window.location.hash = '#/account';
-              }
+            if (parsedUser && parsedUser.email) {
+              console.log('✅ SSO User successfully logged in:', parsedUser);
+              localStorage.setItem('karthub_user', JSON.stringify(parsedUser));
+              setUser(parsedUser);
+              fetchUsers();
+              window.location.hash = '#/account';
             }
           }
         }

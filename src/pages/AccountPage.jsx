@@ -5,8 +5,15 @@ import { Package, Heart, Shield, LogOut, User } from 'lucide-react';
 export function AccountPage({ navigate }) {
   const { user, logout } = useAuth();
 
+  React.useEffect(() => {
+    // Only redirect to login if no user and no ongoing SSO / Google callback
+    const hasSsoCallback = window.location.href.includes('sso_success') || window.location.href.includes('access_token');
+    if (!user && !hasSsoCallback) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
   if (!user) {
-    navigate('/login');
     return null;
   }
 

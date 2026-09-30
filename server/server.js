@@ -458,11 +458,11 @@ app.get('/api/auth/callback', async (req, res) => {
 
     if (authError) {
       const msg = error_description || authError || 'Sign-in cancelled';
-      return res.redirect(`${frontendUrl}/#/?error=${encodeURIComponent(msg)}`);
+      return res.redirect(`${frontendUrl}/#/login?error=${encodeURIComponent(msg)}`);
     }
 
     if (!code) {
-      return res.redirect(`${frontendUrl}/#/?error=Missing%20authorization%20code`);
+      return res.redirect(`${frontendUrl}/#/login?error=Missing%20authorization%20code`);
     }
 
     const logtoEndpoint = process.env.LOGTO_ENDPOINT || 'https://5mjf80.logto.app';
@@ -480,15 +480,17 @@ app.get('/api/auth/callback', async (req, res) => {
 
     // 1. Exchange authorization code for tokens
     console.log('🔄 Exchanging auth code with Logto...', { clientId, redirectUri });
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     const tokenRes = await fetch(`${logtoEndpoint}/oidc/token`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: { 
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${basicAuth}`
+      },
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
         redirect_uri: redirectUri,
-        client_id: clientId,
-        client_secret: clientSecret,
         resource: audience
       })
     });
@@ -498,33 +500,82 @@ app.get('/api/auth/callback', async (req, res) => {
     if (!tokenRes.ok || !tokens.access_token) {
       const errMsg = tokens.error_description || tokens.error || 'Token exchange failed';
       console.warn('❌ Token exchange failed:', errMsg);
-      return res.redirect(`${frontendUrl}/#/?error=${encodeURIComponent(errMsg)}`);
+      return res.redirect(`${frontendUrl}/#/login?error=${encodeURIComponent(errMsg)}`);
     }
 
-    // 2. Fetch User Profile from BeSuperMind
-    console.log('📡 Fetching user profile from BeSuperMind AWS...');
-    const userRes = await fetch(`${backendApiUrl}/api/v3/user/me`, {
-      headers: { Authorization: `Bearer ${tokens.access_token}` }
-    });
+    // 2. Fetch User Profile: try BeSuperMind AWS first, then Logto /oidc/me, then id_token
+    console.log('📡 Fetching user profile...');
+    let profile = null;
 
-    const userPayload = await userRes.json();
-    console.log('👤 User/me response:', userRes.status, userPayload);
-    if (!userRes.ok || !userPayload.data) {
-      console.warn('❌ Profile fetch failed:', userPayload);
-      return res.redirect(`${frontendUrl}/#/?error=${encodeURIComponent(userPayload?.error?.message || 'Unable to load profile')}`);
+    // Source A: BeSuperMind AWS Backend API
+    try {
+      const userRes = await fetch(`${backendApiUrl}/api/v3/user/me`, {
+        headers: { Authorization: `Bearer ${tokens.access_token}` }
+      });
+      const userPayload = await userRes.json();
+      console.log('👤 BeSuperMind user/me response:', userRes.status, userPayload);
+      if (userRes.ok && userPayload.data) {
+        profile = userPayload.data;
+      }
+    } catch (e) {
+      console.warn('⚠️ BeSuperMind user/me fetch failed:', e.message);
     }
 
-    const profile = userPayload.data;
+    // Source B: Logto official /oidc/me endpoint
+    if (!profile) {
+      try {
+        const logtoMeRes = await fetch(`${logtoEndpoint}/oidc/me`, {
+          headers: { Authorization: `Bearer ${tokens.access_token}` }
+        });
+        const logtoProfile = await logtoMeRes.json();
+        console.log('👤 Logto /oidc/me response:', logtoMeRes.status, logtoProfile);
+        if (logtoMeRes.ok && (logtoProfile.email || logtoProfile.sub)) {
+          profile = {
+            id: logtoProfile.sub,
+            email: logtoProfile.email,
+            name: logtoProfile.name,
+            firstName: logtoProfile.name ? logtoProfile.name.split(' ')[0] : 'BuddhaCEO',
+            lastName: logtoProfile.name ? logtoProfile.name.split(' ').slice(1).join(' ') : 'Member',
+            image: logtoProfile.picture || ''
+          };
+        }
+      } catch (e) {
+        console.warn('⚠️ Logto /oidc/me fetch failed:', e.message);
+      }
+    }
+
+    // Source C: OIDC id_token payload
+    if (!profile && tokens.id_token) {
+      try {
+        const base64Url = tokens.id_token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const decoded = JSON.parse(Buffer.from(base64, 'base64').toString('utf8'));
+        if (decoded.email || decoded.sub) {
+          profile = {
+            id: decoded.sub,
+            email: decoded.email,
+            name: decoded.name || 'BuddhaCEO Member',
+            image: decoded.picture || ''
+          };
+        }
+      } catch (e) {}
+    }
+
+    if (!profile) {
+      console.warn('❌ Could not obtain user profile from any source');
+      return res.redirect(`${frontendUrl}/#/login?error=Unable%20to%20load%20profile`);
+    }
+
     const cleanEmail = (profile.email || `${profile.username || 'user'}@besupermind.com`).toLowerCase();
-    const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.username || 'BuddhaCEO Member';
+    const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.name || profile.username || 'BuddhaCEO Member';
 
-    // 3. Sync with MongoDB
+    // 3. Sync with MongoDB Atlas
     let dbUser = null;
     if (isMongoConnected) {
       dbUser = await User.findOne({ $or: [{ email: cleanEmail }, { externalId: profile.id }] });
       if (dbUser) {
         dbUser.name = fullName;
-        dbUser.avatar = profile.image || '';
+        if (profile.image) dbUser.avatar = profile.image;
         dbUser.authProvider = 'buddhaceo';
         dbUser.externalId = profile.id;
         await dbUser.save();
@@ -552,15 +603,41 @@ app.get('/api/auth/callback', async (req, res) => {
       };
     }
 
-    // 4. Redirect back to KartHub with user session payload
-    const userSessionParam = encodeURIComponent(JSON.stringify(dbUser));
-    return res.redirect(`${frontendUrl}/#/account?sso_success=true&user=${userSessionParam}`);
+    // 4. Return HTML bridge that directly sets localStorage and smoothly navigates
+    const safeUserJson = JSON.stringify(dbUser);
+    const userSessionParam = encodeURIComponent(safeUserJson);
+    return res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Logging in...</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #F8FAFC;">
+  <div style="text-align: center; background: white; padding: 36px 48px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+    <div style="font-size: 36px; margin-bottom: 12px;">🎉</div>
+    <h2 style="margin: 0 0 8px; color: #0F172A;">Welcome, ${dbUser.name}!</h2>
+    <p style="margin: 0; color: #64748B;">Connecting to KartHub...</p>
+  </div>
+  <script>
+    try {
+      const user = ${safeUserJson};
+      localStorage.setItem('karthub_user', JSON.stringify(user));
+      try {
+        window.dispatchEvent(new StorageEvent('storage', { key: 'karthub_user', newValue: JSON.stringify(user) }));
+      } catch(e) {}
+    } catch(err) {
+      console.error(err);
+    }
+    window.location.replace('${frontendUrl}/#/account?sso_success=true&user=${userSessionParam}');
+  </script>
+</body>
+</html>`);
   } catch (err) {
     console.error('SSO Callback error:', err);
     const host = req.get('host') || '';
     const isRender = host.includes('render.com') || host.includes('karthub') || Boolean(process.env.RENDER);
     const frontendUrl = process.env.FRONTEND_APP_URL || (isRender ? 'https://kart-hub.onrender.com' : 'http://localhost:5173');
-    return res.redirect(`${frontendUrl}/#/?error=${encodeURIComponent(err.message)}`);
+    return res.redirect(`${frontendUrl}/#/login?error=${encodeURIComponent(err.message)}`);
   }
 });
 

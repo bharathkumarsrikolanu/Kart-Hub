@@ -222,6 +222,26 @@ export function LoginPage({ query, navigate }) {
           </p>
         </div>
 
+        {/* URL Error Notice */}
+        {query?.error && (
+          <div style={{
+            backgroundColor: '#FEF2F2',
+            border: '1px solid #FCA5A5',
+            borderRadius: 8,
+            padding: '10px 14px',
+            marginBottom: 16,
+            color: '#991B1B',
+            fontSize: 13,
+            lineHeight: 1.4,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}>
+            <span style={{ fontSize: 16 }}>⚠️</span>
+            <span>{decodeURIComponent(query.error)}</span>
+          </div>
+        )}
+
         {/* Primary Form */}
         <form onSubmit={handleSubmit}>
           {mode === 'signup' && (
