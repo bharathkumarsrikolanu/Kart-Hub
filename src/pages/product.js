@@ -38,6 +38,7 @@ export function renderProductPage(params) {
         <div class="product-main-image" id="main-image-container">
           <img src="${product.images[0]}" alt="${product.name}" id="main-product-image" onerror="this.src='https://via.placeholder.com/500x500?text=${encodeURIComponent(product.brand)}'" />
         </div>
+        ${product.images && product.images.length > 1 ? `
         <div class="product-thumbnails">
           ${product.images.map((img, i) => `
             <div class="product-thumb ${i === 0 ? 'active' : ''}" data-img="${img}">
@@ -45,6 +46,7 @@ export function renderProductPage(params) {
             </div>
           `).join('')}
         </div>
+        ` : ''}
       </div>
 
       <!-- Product Info -->

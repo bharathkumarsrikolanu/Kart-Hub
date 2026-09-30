@@ -118,6 +118,21 @@ export function AccountPage({ navigate }) {
             <span style={{ fontSize: 12, color: '#6B7280', display: 'block', fontWeight: 600 }}>Email Address</span>
             <strong style={{ fontSize: 15, color: '#111827' }}>{user.email}</strong>
           </div>
+          {(user.authProvider === 'buddhaceo' || user.authProvider === 'besupermind') && (
+            <div style={{ background: '#F5F3FF', padding: '12px 14px', borderRadius: 6, border: '1px solid #DDD6FE', gridColumn: 'span 2' }}>
+              <span style={{ fontSize: 12, color: '#6D28D9', display: 'block', fontWeight: 600 }}>Linked Account Provider</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                <img 
+                  src={user.authProvider === 'buddhaceo' ? '/buddhaceo-logo.svg' : '/besupermind-logo.svg'} 
+                  alt={user.authProvider === 'buddhaceo' ? 'BuddhaCEO' : 'BeSuperMind'} 
+                  style={{ width: 20, height: 20, objectFit: 'contain' }} 
+                />
+                <strong style={{ fontSize: 14, color: '#4C1D95' }}>
+                  {user.authProvider === 'buddhaceo' ? 'Buddha-CEO Quantum Foundation Single Sign-On' : 'BeSuperMind Single Sign-On'}
+                </strong>
+              </div>
+            </div>
+          )}
         </div>
 
         <button 

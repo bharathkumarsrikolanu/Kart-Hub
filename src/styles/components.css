@@ -23,22 +23,25 @@
 .btn:active { transform: scale(0.97); }
 
 .btn-primary {
-  background: linear-gradient(to bottom, #FFD814, #F7CA00);
-  color: var(--text-primary);
-  border: 1px solid #F2C200;
-  box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5);
+  background: linear-gradient(to bottom, #FFB800, #F59E0B);
+  color: #0F172A;
+  border: 1px solid #D97706;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25);
 }
 .btn-primary:hover {
-  background: linear-gradient(to bottom, #F7CA00, #E8B800);
+  background: linear-gradient(to bottom, #F59E0B, #D97706);
+  color: #FFFFFF;
 }
 
-.btn-orange {
-  background: linear-gradient(to bottom, #FFA41C, #FF8F00);
+.btn-blue, .btn-sapphire, .btn-orange {
+  background: linear-gradient(to bottom, #2563EB, #1D4ED8);
   color: var(--text-white);
-  border: 1px solid #E77600;
+  border: 1px solid #1E40AF;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
-.btn-orange:hover {
-  background: linear-gradient(to bottom, #FF8F00, #E77600);
+.btn-blue:hover, .btn-sapphire:hover, .btn-orange:hover {
+  background: linear-gradient(to bottom, #1D4ED8, #1E40AF);
 }
 
 .btn-secondary {

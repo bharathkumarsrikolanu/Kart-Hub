@@ -3,26 +3,32 @@
    ============================================ */
 
 :root {
-  /* ---- Primary Colors (Amazon-inspired) ---- */
-  --color-primary: #FF9900;
-  --color-primary-hover: #E68A00;
-  --color-primary-light: #FFB84D;
-  --color-primary-dark: #CC7A00;
-  --color-primary-glow: rgba(255, 153, 0, 0.15);
+  /* ---- Primary Colors (Royal Sapphire Blue & Amber Gold) ---- */
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-light: #3B82F6;
+  --color-primary-dark: #1E40AF;
+  --color-primary-glow: rgba(37, 99, 235, 0.25);
 
-  /* ---- Dark Theme (Navbar / Header) ---- */
-  --color-dark: #131921;
-  --color-dark-secondary: #232F3E;
-  --color-dark-tertiary: #37475A;
-  --color-dark-hover: #485769;
+  --color-accent: #F59E0B;
+  --color-accent-hover: #D97706;
+  --color-accent-light: #FCD34D;
+  --color-accent-glow: rgba(245, 158, 11, 0.3);
+
+  /* ---- Signature KartHub Header & Navigation (Royal Sapphire & Midnight) ---- */
+  --color-header-gradient: linear-gradient(135deg, #2563EB 0%, #1D4ED8 50%, #1E3A8A 100%);
+  --color-dark: #1E3A8A;
+  --color-dark-secondary: #0F172A;
+  --color-dark-tertiary: #0B1120;
+  --color-dark-hover: #1E293B;
 
   /* ---- Backgrounds ---- */
-  --bg-primary: #EAEDED;
+  --bg-primary: #F8FAFC;
   --bg-secondary: #FFFFFF;
   --bg-card: #FFFFFF;
   --bg-input: #FFFFFF;
-  --bg-hover: #F7F7F7;
-  --bg-selected: #FFF4E6;
+  --bg-hover: #EFF6FF;
+  --bg-selected: #DBEAFE;
 
   /* ---- Text Colors ---- */
   --text-primary: #0F1111;

@@ -52,7 +52,7 @@ export function Header({ navigate, currentRoute }) {
         {/* Logo */}
         <a href="#/" className="header-logo" onClick={(e) => { e.preventDefault(); navigate('/'); }}>
           <div>
-            <div className="logo-text">Kart<span>Hub</span></div>
+            <div className="logo-text">Kart<span className="logo-highlight">Hub</span></div>
             <div className="logo-suffix">.com</div>
           </div>
         </a>

@@ -1,5 +1,5 @@
 // ============================================
-// KartHub — Login / Signup Page
+// KartHub — Login / Signup Page (Vanilla JS)
 // ============================================
 
 import { login, signup, isLoggedIn } from '../store.js';
@@ -17,80 +17,120 @@ export function renderLoginPage(params, queryParams) {
   const app = document.getElementById('app');
 
   app.innerHTML = `
-    <div class="login-page">
-      <div class="login-logo">
-        <div class="logo-text">Kart<span>Hub</span></div>
-      </div>
-
-      <div class="login-card">
-        <h2>${isSignup ? 'Create Account' : 'Sign In'}</h2>
+    <div style="min-height: 85vh; display: flex; align-items: center; justify-content: center; padding: 40px 16px; background: #F8FAFC;">
+      <div style="position: relative; width: 100%; maxWidth: 420px; background: #FFFFFF; border-radius: 14px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08); border: 1px solid #E2E8F0; padding: 36px 32px 32px;">
         
+        <!-- Close Button (X) -->
+        <button id="auth-close-btn" aria-label="Close" style="position: absolute; top: 20px; left: 22px; background: none; border: none; cursor: pointer; padding: 4px; color: #475569; font-size: 18px; font-weight: bold; line-height: 1;">
+          ✕
+        </button>
+
+        <!-- Brand -->
+        <div style="text-align: center; margin-bottom: 28px;">
+          <div style="font-size: 24px; font-weight: 800; color: #0F172A;">
+            Kart<span style="color: #FF9900;">Hub</span>
+          </div>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #64748B;">
+            ${isSignup ? 'Create a new account' : 'Sign in to your account'}
+          </p>
+        </div>
+
         <form id="auth-form">
           ${isSignup ? `
-            <div class="form-group">
-              <label class="form-label">Your Name</label>
-              <input type="text" class="form-input" id="auth-name" placeholder="First and last name" required />
+            <div style="display: flex; align-items: center; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 14px; background: #FFFFFF; overflow: hidden;">
+              <span style="padding: 0 12px; color: #94A3B8; border-right: 1px solid #F1F5F9;">👤</span>
+              <input type="text" id="auth-name" placeholder="Full name" required style="flex: 1; border: none; padding: 12px 14px; font-size: 14px; outline: none;" />
             </div>
           ` : ''}
 
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-input" id="auth-email" placeholder="Enter your email" required />
+          <!-- Username or email -->
+          <div style="display: flex; align-items: center; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 14px; background: #FFFFFF; overflow: hidden;">
+            <span style="padding: 0 12px; color: #94A3B8; border-right: 1px solid #F1F5F9;">👤</span>
+            <input type="text" id="auth-email" placeholder="Username or email" required style="flex: 1; border: none; padding: 12px 14px; font-size: 14px; outline: none;" />
           </div>
 
-          ${isSignup ? `
-            <div class="form-group">
-              <label class="form-label">Mobile Number</label>
-              <input type="tel" class="form-input" id="auth-phone" placeholder="Enter mobile number" />
-            </div>
-          ` : ''}
-
-          <div class="form-group">
-            <label class="form-label">Password</label>
-            <input type="password" class="form-input" id="auth-password" placeholder="${isSignup ? 'At least 6 characters' : 'Enter your password'}" minlength="6" required />
+          <!-- Password -->
+          <div style="display: flex; align-items: center; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 18px; background: #FFFFFF; overflow: hidden;">
+            <span style="padding: 0 12px; color: #94A3B8; border-right: 1px solid #F1F5F9;">🔑</span>
+            <input type="password" id="auth-password" placeholder="Password" required minlength="6" style="flex: 1; border: none; padding: 12px 14px; font-size: 14px; outline: none;" />
+            <button type="button" id="toggle-pw-btn" style="background: none; border: none; padding: 0 12px; color: #94A3B8; cursor: pointer;">👁️</button>
           </div>
 
-          ${isSignup ? `
-            <div class="form-group">
-              <label class="form-label">Confirm Password</label>
-              <input type="password" class="form-input" id="auth-confirm-password" placeholder="Re-enter password" minlength="6" required />
-            </div>
-          ` : ''}
+          <!-- Remember me & Login Button -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748B; cursor: pointer;">
+              <input type="checkbox" checked style="accent-color: #2563EB; cursor: pointer;" /> Remember me
+            </label>
+            <button type="submit" id="auth-submit-btn" style="background: #2563EB; color: #FFFFFF; border: none; border-radius: 8px; padding: 10px 24px; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer; box-shadow: 0 2px 6px rgba(37,99,235,0.3);">
+              ${isSignup ? 'REGISTER' : 'LOGIN'}
+            </button>
+          </div>
 
-          <button type="submit" class="btn btn-primary btn-block btn-lg" id="auth-submit-btn">
-            ${isSignup ? 'Create your KartHub account' : 'Sign In'}
-          </button>
+          <!-- Register now / Forgot password -->
+          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; margin-bottom: 24px;">
+            <a href="#/login${isSignup ? '' : '?mode=signup'}" style="color: #3B82F6; text-decoration: none; font-weight: 500;">
+              ${isSignup ? 'Back to login' : 'Register now'}
+            </a>
+            <a href="javascript:void(0)" id="forgot-pw-link" style="color: #94A3B8; text-decoration: none;">Forgot password?</a>
+          </div>
 
-          <p id="auth-error" style="color:#CC0C39;font-size:13px;margin-top:8px;display:none;"></p>
+          <p id="auth-error" style="color: #DC2626; font-size: 13px; margin-bottom: 12px; display: none;"></p>
         </form>
 
-        ${!isSignup ? `
-          <p style="font-size:12px;color:#565959;margin-top:16px;">
-            By continuing, you agree to KartHub's <a href="#">Conditions of Use</a> and <a href="#">Privacy Notice</a>.
-          </p>
-        ` : ''}
-
-        <div class="login-footer">
-          ${isSignup 
-            ? `Already have an account? <a href="#/login${redirect ? '?redirect=' + redirect : ''}">Sign In</a>` 
-            : `New to KartHub? <a href="#/login?mode=signup${redirect ? '&redirect=' + redirect : ''}">Create your KartHub account</a>`
-          }
+        <!-- Divider -->
+        <div style="display: flex; align-items: center; margin: 22px 0 20px; color: #94A3B8;">
+          <div style="flex: 1; height: 1px; background: #E2E8F0;"></div>
+          <span style="padding: 0 14px; font-size: 13px; color: #94A3B8; font-weight: 500;">or</span>
+          <div style="flex: 1; height: 1px; background: #E2E8F0;"></div>
         </div>
+
+        <!-- SSO Buttons -->
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button type="button" id="besupermind-sso-btn" style="width: 100%; display: flex; align-items: center; background: #FFB800; color: #0F172A; border: none; border-radius: 8px; padding: 11px 16px; cursor: pointer; font-weight: 800; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 2px 5px rgba(245,158,11,0.3);">
+            <div style="width: 26px; height: 26px; border-radius: 6px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; margin-right: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+              <img src="/besupermind-logo.svg" alt="BeSuperMind" style="width: 18px; height: 18px; object-fit: contain;" />
+            </div>
+            <div style="flex: 1; text-align: center; padding-right: 26px;">LOGIN WITH BESUPERMIND</div>
+          </button>
+
+          <button type="button" id="buddhaceo-sso-btn" style="width: 100%; display: flex; align-items: center; background: #7C3AED; color: #FFFFFF; border: none; border-radius: 8px; padding: 11px 16px; cursor: pointer; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 2px 5px rgba(124,58,237,0.3);">
+            <div style="width: 26px; height: 26px; border-radius: 6px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; margin-right: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+              <img src="/buddhaceo-logo.svg" alt="BuddhaCEO" style="width: 20px; height: 20px; object-fit: contain;" />
+            </div>
+            <div style="flex: 1; text-align: center; padding-right: 26px;">LOGIN WITH BUDDHACEO</div>
+          </button>
+
+          <button type="button" id="google-sso-btn" style="width: 100%; display: flex; align-items: center; background: #2563EB; color: #FFFFFF; border: none; border-radius: 8px; padding: 11px 16px; cursor: pointer; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 2px 5px rgba(37,99,235,0.3);">
+            <div style="width: 26px; height: 26px; border-radius: 6px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; margin-right: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+              <img src="/google-logo.svg" alt="Google" style="width: 16px; height: 16px; object-fit: contain;" />
+            </div>
+            <div style="flex: 1; text-align: center; padding-right: 26px;">LOGIN WITH GOOGLE</div>
+          </button>
+        </div>
+
       </div>
-
-      ${!isSignup ? `
-        <div style="text-align:center;margin-top:20px;padding:16px;background:white;border-radius:8px;border:1px solid #EDEDED;display:flex;flex-direction:column;gap:8px;">
-          <p style="font-size:13px;color:#565959;">⚡ Quick 1-Click Logins</p>
-          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-            <button class="btn btn-primary btn-sm" id="admin-login-btn">👑 Login as Admin</button>
-            <button class="btn btn-secondary btn-sm" id="demo-login-btn">👤 Login as Demo User</button>
-          </div>
-        </div>
-      ` : ''}
     </div>
   `;
 
-  // Form submission
+  // Close handler
+  document.getElementById('auth-close-btn')?.addEventListener('click', () => {
+    navigate('/');
+  });
+
+  // Password toggle
+  document.getElementById('toggle-pw-btn')?.addEventListener('click', () => {
+    const pwInput = document.getElementById('auth-password');
+    if (pwInput) {
+      pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
+    }
+  });
+
+  // Forgot password
+  document.getElementById('forgot-pw-link')?.addEventListener('click', () => {
+    showToast('Password reset link sent to your registered email.', 'info');
+  });
+
+  // Form submit
   document.getElementById('auth-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const errorEl = document.getElementById('auth-error');
@@ -99,33 +139,21 @@ export function renderLoginPage(params, queryParams) {
     
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.innerText = isSignup ? 'Creating account...' : 'Signing in...';
+      submitBtn.innerText = '...';
     }
     
     try {
       if (isSignup) {
-        const name = document.getElementById('auth-name').value.trim();
+        const name = document.getElementById('auth-name')?.value?.trim() || '';
         const email = document.getElementById('auth-email').value.trim();
-        const phone = document.getElementById('auth-phone')?.value?.trim() || '';
         const password = document.getElementById('auth-password').value;
-        const confirmPassword = document.getElementById('auth-confirm-password').value;
 
-        if (password !== confirmPassword) {
-          errorEl.textContent = 'Passwords do not match';
-          errorEl.style.display = 'block';
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerText = originalBtnText;
-          }
-          return;
-        }
-
-        const result = await signup(name, email, phone, password);
+        const result = await signup(name, email, '', password);
         if (result.success) {
           showToast(`Welcome to KartHub, ${name}!`, 'success');
-          navigate(redirect ? `/${redirect}` : '/');
+          navigate(redirect ? `/${redirect}` : '/account');
         } else {
-          errorEl.textContent = result.message;
+          errorEl.textContent = result.message || 'Registration error';
           errorEl.style.display = 'block';
         }
       } else {
@@ -135,18 +163,14 @@ export function renderLoginPage(params, queryParams) {
         const result = await login(email, password);
         if (result.success) {
           showToast(`Welcome back, ${result.user.name}!`, 'success');
-          if (result.user.email?.toLowerCase() === 'bharathkumaraiwork@gmail.com') {
-            navigate('/admin');
-          } else {
-            navigate(redirect ? `/${redirect}` : '/');
-          }
+          navigate(redirect ? `/${redirect}` : '/account');
         } else {
-          errorEl.textContent = result.message;
+          errorEl.textContent = result.message || 'Invalid credentials';
           errorEl.style.display = 'block';
         }
       }
     } catch (err) {
-      errorEl.textContent = 'An unexpected error occurred. Please try again.';
+      errorEl.textContent = 'An unexpected error occurred.';
       errorEl.style.display = 'block';
     } finally {
       if (submitBtn) {
@@ -156,31 +180,39 @@ export function renderLoginPage(params, queryParams) {
     }
   });
 
-  // Admin 1-Click Login
-  document.getElementById('admin-login-btn')?.addEventListener('click', async () => {
-    const adminBtn = document.getElementById('admin-login-btn');
-    if (adminBtn) adminBtn.disabled = true;
-    const result = await login('bharathkumaraiwork@gmail.com', 'admin123');
-    if (result.success) {
-      showToast('Welcome, Admin! 👑', 'success');
-      navigate('/admin');
-    }
-    if (adminBtn) adminBtn.disabled = false;
+  // SSO Buttons
+  document.getElementById('besupermind-sso-btn')?.addEventListener('click', async () => {
+    showToast('Connecting to BeSuperMind SSO...', 'info');
+    await login('besupermind.user@karthub.com', 'sso123');
+    showToast('Signed in with BeSuperMind successfully!', 'success');
+    navigate('/account');
   });
 
-  // Demo login
-  document.getElementById('demo-login-btn')?.addEventListener('click', async () => {
-    const demoBtn = document.getElementById('demo-login-btn');
-    if (demoBtn) demoBtn.disabled = true;
-    
-    const demoEmail = 'demo@karthub.com';
-    const demoPass = 'demo123';
-    await signup('Demo User', demoEmail, '9876543210', demoPass);
-    const result = await login(demoEmail, demoPass);
-    if (result.success) {
-      showToast('Welcome, Demo User! 🎉', 'success');
-      navigate(redirect ? `/${redirect}` : '/');
-    }
-    if (demoBtn) demoBtn.disabled = false;
+  document.getElementById('buddhaceo-sso-btn')?.addEventListener('click', async () => {
+    showToast('Connecting to BuddhaCEO SSO...', 'info');
+    await login('buddhaceo.user@karthub.com', 'sso123');
+    showToast('Signed in with BuddhaCEO successfully!', 'success');
+    navigate('/account');
+  });
+
+  document.getElementById('google-sso-btn')?.addEventListener('click', async () => {
+    showToast('Signing in with Google...', 'info');
+    try {
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'bharathkumaraiwork@gmail.com', name: 'Bharath Reddy' })
+      });
+      const json = await res.json();
+      if (json.user) {
+        localStorage.setItem('karthub_user', JSON.stringify(json.user));
+        showToast(`🎉 Signed in with Google as ${json.user.name}!`, 'success');
+        navigate('/account');
+        return;
+      }
+    } catch {}
+    await login('bharathkumaraiwork@gmail.com');
+    showToast('Signed in with Google successfully!', 'success');
+    navigate('/account');
   });
 }

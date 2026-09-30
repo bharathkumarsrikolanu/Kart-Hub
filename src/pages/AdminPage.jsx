@@ -36,7 +36,7 @@ export function AdminPage({ navigate }) {
 
   // Form States
   const [newProd, setNewProd] = useState({
-    name: '', category: 'Electronics', brand: '', price: '', originalPrice: '', stock: 50, image: '', description: ''
+    name: '', category: 'Electronics', brand: '', price: '', originalPrice: '', stock: 50, images: [''], description: ''
   });
   const [editProd, setEditProd] = useState(null);
 
@@ -109,24 +109,45 @@ export function AdminPage({ navigate }) {
       return;
     }
 
+    const validImages = (newProd.images || []).map(img => (img || '').trim()).filter(Boolean);
+    if (validImages.length === 0 && newProd.image) {
+      validImages.push(newProd.image.trim());
+    }
+    if (validImages.length === 0) {
+      validImages.push('https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop');
+    }
+
     await addProduct({
       ...newProd,
-      images: [newProd.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop']
+      images: validImages,
+      image: validImages[0]
     });
 
     setShowAddModal(false);
-    setNewProd({ name: '', category: 'Electronics', brand: '', price: '', originalPrice: '', stock: 50, image: '', description: '' });
-    showToast('✓ Product added successfully to catalog and database!');
+    setNewProd({ name: '', category: 'Electronics', brand: '', price: '', originalPrice: '', stock: 50, images: [''], description: '' });
+    showToast('✓ Product with multiple photos added successfully to catalog!');
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     if (!editProd || !editProd.name || !editProd.price) return;
 
-    await updateProduct(editProd.id, editProd);
+    const validImages = (editProd.images || []).map(img => (img || '').trim()).filter(Boolean);
+    if (validImages.length === 0 && editProd.image) {
+      validImages.push(editProd.image.trim());
+    }
+    if (validImages.length === 0) {
+      validImages.push('https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop');
+    }
+
+    await updateProduct(editProd.id, {
+      ...editProd,
+      images: validImages,
+      image: validImages[0]
+    });
     setShowEditModal(false);
     setEditProd(null);
-    showToast('✓ Product changes saved to database!');
+    showToast('✓ Product photos & changes saved to database!');
   };
 
   const handleDelete = async (prodId, prodName) => {
@@ -348,9 +369,13 @@ export function AdminPage({ navigate }) {
                     <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                       <button 
                         onClick={() => {
+                          const existingImgs = Array.isArray(p.images) && p.images.length > 0 
+                            ? [...p.images] 
+                            : (p.image ? [p.image] : ['']);
                           setEditProd({
                             ...p,
-                            image: (Array.isArray(p.images) && p.images[0]) || p.image || ''
+                            images: existingImgs,
+                            image: existingImgs[0] || ''
                           });
                           setShowEditModal(true);
                         }}
@@ -533,28 +558,82 @@ export function AdminPage({ navigate }) {
               </div>
 
               <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>Product Image URL</label>
-                <input 
-                  type="url" 
-                  placeholder="https://..."
-                  value={newProd.image}
-                  onChange={(e) => setNewProd({ ...newProd, image: e.target.value })}
-                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 6, marginBottom: 8 }}
-                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>
+                    📸 Product Photos (Multi-Angle Gallery)
+                  </label>
+                  {(newProd.images || []).length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setNewProd(prev => ({ ...prev, images: [...(prev.images || ['']), ''] }))}
+                      style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
+                    >
+                      + Add Another Photo Angle
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+                  {(newProd.images && newProd.images.length > 0 ? newProd.images : ['']).map((imgUrl, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F8FAFC', padding: 8, borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                      <div style={{ width: 42, height: 42, borderRadius: 6, background: '#FFF', border: '1px solid #CBD5E1', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                        {imgUrl ? (
+                          <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                        ) : (
+                          <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 700 }}>#{idx + 1}</span>
+                        )}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', marginBottom: 3 }}>
+                          {idx === 0 ? 'Photo 1 (Front View / Cover)' : idx === 1 ? 'Photo 2 (Side Profile & Back)' : idx === 2 ? 'Photo 3 (In-Use / Lifestyle)' : `Photo ${idx + 1} (Detail / Packaging)`}
+                        </div>
+                        <input
+                          type="url"
+                          placeholder="Paste image URL (https://...)"
+                          value={imgUrl || ''}
+                          onChange={(e) => {
+                            const updated = [...(newProd.images || [''])];
+                            updated[idx] = e.target.value;
+                            setNewProd({ ...newProd, images: updated, image: updated[0] });
+                          }}
+                          style={{ width: '100%', padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: 6, fontSize: 12, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      {(newProd.images || []).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = newProd.images.filter((_, i) => i !== idx);
+                            setNewProd({ ...newProd, images: updated.length ? updated : [''], image: updated[0] || '' });
+                          }}
+                          style={{ background: '#FEE2E2', border: '1px solid #FECACA', color: '#DC2626', borderRadius: 6, padding: '6px 8px', cursor: 'pointer' }}
+                          title="Remove photo"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-                  Quick Preset Images (Click to Auto-fill URL & Category):
+                  Quick Preset Images (Click to append to photos):
                 </div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', maxHeight: 140, overflowY: 'auto', padding: '6px', background: '#F9FAFB', borderRadius: 6, border: '1px solid #E5E7EB' }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', maxHeight: 120, overflowY: 'auto', padding: '6px', background: '#F9FAFB', borderRadius: 6, border: '1px solid #E5E7EB' }}>
                   {PRESET_IMAGES.map(img => (
                     <button 
                       key={img.name}
                       type="button"
-                      onClick={() => setNewProd({ 
-                        ...newProd, 
-                        image: img.url,
-                        category: img.category || newProd.category 
-                      })}
+                      onClick={() => {
+                        const current = (newProd.images || []).filter(Boolean);
+                        const next = current.length === 0 ? [img.url] : [...current, img.url].slice(0, 5);
+                        setNewProd({ 
+                          ...newProd, 
+                          images: next,
+                          image: next[0],
+                          category: img.category || newProd.category 
+                        });
+                      }}
                       style={{ 
                         fontSize: 11, 
                         padding: '4px 8px', 
@@ -586,7 +665,7 @@ export function AdminPage({ navigate }) {
       {/* EDIT PRODUCT MODAL */}
       {showEditModal && editProd && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#FFF', width: '100%', maxWidth: 560, borderRadius: 10, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#FFF', width: '100%', maxWidth: 580, borderRadius: 10, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>Edit Product ({editProd.id})</h2>
             <form onSubmit={handleEditSubmit}>
               <div style={{ marginBottom: 12 }}>
@@ -651,28 +730,84 @@ export function AdminPage({ navigate }) {
                 </div>
               </div>
 
+              {/* Multi-Photo Manager in Edit Modal */}
               <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>Product Image URL</label>
-                <input 
-                  type="url" 
-                  value={editProd.image || ''}
-                  onChange={(e) => setEditProd({ ...editProd, image: e.target.value })}
-                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 6, marginBottom: 8 }}
-                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>
+                    📸 Product Photos (Multi-Angle Gallery)
+                  </label>
+                  {(editProd.images || []).length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setEditProd(prev => ({ ...prev, images: [...(prev.images || ['']), ''] }))}
+                      style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
+                    >
+                      + Add Another Photo Angle
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+                  {(editProd.images && editProd.images.length > 0 ? editProd.images : [editProd.image || '']).map((imgUrl, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F8FAFC', padding: 8, borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                      <div style={{ width: 42, height: 42, borderRadius: 6, background: '#FFF', border: '1px solid #CBD5E1', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                        {imgUrl ? (
+                          <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                        ) : (
+                          <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 700 }}>#{idx + 1}</span>
+                        )}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', marginBottom: 3 }}>
+                          {idx === 0 ? 'Photo 1 (Front View / Cover)' : idx === 1 ? 'Photo 2 (Side Profile & Back)' : idx === 2 ? 'Photo 3 (In-Use / Lifestyle)' : `Photo ${idx + 1} (Detail / Packaging)`}
+                        </div>
+                        <input
+                          type="url"
+                          placeholder="Paste image URL (https://...)"
+                          value={imgUrl || ''}
+                          onChange={(e) => {
+                            const updated = [...(editProd.images || [editProd.image || ''])];
+                            updated[idx] = e.target.value;
+                            setEditProd({ ...editProd, images: updated, image: updated[0] });
+                          }}
+                          style={{ width: '100%', padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: 6, fontSize: 12, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      {(editProd.images || []).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = editProd.images.filter((_, i) => i !== idx);
+                            setEditProd({ ...editProd, images: updated.length ? updated : [''], image: updated[0] || '' });
+                          }}
+                          style={{ background: '#FEE2E2', border: '1px solid #FECACA', color: '#DC2626', borderRadius: 6, padding: '6px 8px', cursor: 'pointer' }}
+                          title="Remove photo"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-                  Quick Preset Images (Click to replace image):
+                  Quick Preset Images (Click to append):
                 </div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', maxHeight: 140, overflowY: 'auto', padding: '6px', background: '#F9FAFB', borderRadius: 6, border: '1px solid #E5E7EB' }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', maxHeight: 120, overflowY: 'auto', padding: '6px', background: '#F9FAFB', borderRadius: 6, border: '1px solid #E5E7EB' }}>
                   {PRESET_IMAGES.map(img => (
                     <button 
                       key={img.name}
                       type="button"
-                      onClick={() => setEditProd({ 
-                        ...editProd, 
-                        image: img.url,
-                        category: img.category || editProd.category
-                      })}
+                      onClick={() => {
+                        const current = (editProd.images || []).filter(Boolean);
+                        const next = current.length === 0 ? [img.url] : [...current, img.url].slice(0, 5);
+                        setEditProd({ 
+                          ...editProd, 
+                          images: next,
+                          image: next[0],
+                          category: img.category || editProd.category
+                        });
+                      }}
                       style={{ 
                         fontSize: 11, 
                         padding: '4px 8px', 

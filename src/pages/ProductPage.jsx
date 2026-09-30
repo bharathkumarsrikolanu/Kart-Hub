@@ -241,20 +241,32 @@ export function ProductPage({ params, navigate }) {
 
             {/* Thumbnails */}
             {images.length > 1 && (
-              <div className="product-thumbs-strip">
-                {images.map((img, i) => (
-                  <button 
-                    key={i} 
-                    type="button"
-                    className="product-thumb-btn"
-                    onClick={() => setSelectedImg(i)}
-                    style={{
-                      border: i === selectedImg ? '2px solid #FF9900' : '1px solid #D1D5DB',
-                    }}
-                  >
-                    <img src={img} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                  </button>
-                ))}
+              <div style={{ marginTop: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    {selectedImg === 0 ? 'Front View' : selectedImg === 1 ? 'Side Profile & Back' : selectedImg === 2 ? 'In-Use & Lifestyle' : 'Detail & Packaging'}
+                  </span>
+                  <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>{selectedImg + 1} / {images.length} views</span>
+                </div>
+                <div className="product-thumbs-strip">
+                  {images.map((img, i) => (
+                    <button 
+                      key={i} 
+                      type="button"
+                      className="product-thumb-btn"
+                      onClick={() => setSelectedImg(i)}
+                      onMouseEnter={() => setSelectedImg(i)}
+                      style={{
+                        border: i === selectedImg ? '2px solid #FF9900' : '1.5px solid #E2E8F0',
+                        boxShadow: i === selectedImg ? '0 0 0 2px rgba(255,153,0,0.2)' : 'none',
+                        transform: i === selectedImg ? 'scale(1.04)' : 'scale(1)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <img src={img} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
