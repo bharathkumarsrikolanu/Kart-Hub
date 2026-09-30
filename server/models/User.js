@@ -16,6 +16,9 @@ const userSchema = new mongoose.Schema({
     pincode: String,
     isDefault: { type: Boolean, default: false }
   }],
+  authProvider: { type: String, default: 'local' }, // 'local', 'buddhaceo', 'besupermind'
+  avatar: { type: String, default: '' },
+  externalId: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 }, {

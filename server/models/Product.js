@@ -11,16 +11,19 @@ const productSchema = new mongoose.Schema({
   discount: { type: Number, default: 0 },
   rating: { type: Number, default: 4.5 },
   reviewCount: { type: Number, default: 10 },
+  image: { type: String },
   images: [{ type: String }],
   description: { type: String, default: '' },
   features: [{ type: String }],
-  specifications: { type: Map, of: String },
+  specifications: { type: mongoose.Schema.Types.Mixed },
   seller: { type: String, default: 'KartHub Authorized Retailer' },
   stock: { type: Number, default: 50 },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 }, {
-  timestamps: true
+  timestamps: true,
+  strict: false
 });
 
 export const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
+

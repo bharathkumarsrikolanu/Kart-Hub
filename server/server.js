@@ -151,7 +151,7 @@ app.post('/api/products', async (req, res) => {
     if (isMongoConnected) {
       const product = await Product.findOneAndUpdate(
         { id: prodData.id },
-        prodData,
+        { $set: prodData },
         { upsert: true, new: true }
       );
       syncToFiles();
@@ -171,10 +171,16 @@ app.put('/api/products/:id', async (req, res) => {
     };
 
     if (isMongoConnected) {
+      const query = {
+        $or: [
+          { id: req.params.id },
+          ...(mongoose.Types.ObjectId.isValid(req.params.id) ? [{ _id: req.params.id }] : [])
+        ]
+      };
       const product = await Product.findOneAndUpdate(
-        { id: req.params.id },
-        updatedData,
-        { new: true }
+        query,
+        { $set: updatedData },
+        { new: true, upsert: true }
       );
       if (!product) return res.status(404).json({ success: false, error: 'Product not found' });
       syncToFiles();
@@ -189,7 +195,13 @@ app.put('/api/products/:id', async (req, res) => {
 app.delete('/api/products/:id', async (req, res) => {
   try {
     if (isMongoConnected) {
-      await Product.findOneAndDelete({ id: req.params.id });
+      const query = {
+        $or: [
+          { id: req.params.id },
+          ...(mongoose.Types.ObjectId.isValid(req.params.id) ? [{ _id: req.params.id }] : [])
+        ]
+      };
+      await Product.findOneAndDelete(query);
       syncToFiles();
       return res.json({ success: true, message: 'Product deleted from MongoDB' });
     }
@@ -277,6 +289,290 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// ============================================
+// Google Direct Sign-In (Passwordless)
+// ============================================
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { email, name, avatar, googleId } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Email is required' });
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const displayName = name || cleanEmail.split('@')[0] || 'Google User';
+
+    let userDoc = null;
+    if (isMongoConnected) {
+      userDoc = await User.findOne({ email: cleanEmail });
+      if (userDoc) {
+        userDoc.name = userDoc.name || displayName;
+        if (avatar) userDoc.avatar = avatar;
+        userDoc.authProvider = 'google';
+        if (googleId) userDoc.externalId = googleId;
+        await userDoc.save();
+      } else {
+        userDoc = await User.create({
+          id: 'USR_G_' + Date.now(),
+          name: displayName,
+          email: cleanEmail,
+          avatar: avatar || '',
+          role: cleanEmail === 'bharathkumaraiwork@gmail.com' ? 'admin' : 'customer',
+          authProvider: 'google',
+          externalId: googleId || ''
+        });
+      }
+      syncToFiles();
+    } else {
+      userDoc = {
+        id: 'USR_G_' + Date.now(),
+        name: displayName,
+        email: cleanEmail,
+        avatar: avatar || '',
+        role: cleanEmail === 'bharathkumaraiwork@gmail.com' ? 'admin' : 'customer',
+        authProvider: 'google'
+      };
+    }
+
+    res.json({ success: true, user: userDoc });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================
+// 2B. BESUPERMIND & BUDDHACEO SSO REST API
+// ============================================
+
+async function handleBeSuperMindStart(req, res) {
+  try {
+    const { orgSlug = process.env.PARTNER_ORG_SLUG || 'bceo', state } = req.body;
+    const clientId = process.env.PARTNER_CLIENT_ID || 'j2e4giinene26vrig6i51';
+    const redirectUri = process.env.PARTNER_REDIRECT_URI || 'http://localhost:5000/api/auth/callback';
+    const backendApiUrl = process.env.BACKEND_API_URL || 'https://lbse6s6n81.execute-api.ap-south-1.amazonaws.com';
+
+    // If client secret is configured and not placeholder, call live BeSuperMind Start API
+    if (process.env.LOGTO_CLIENT_SECRET && process.env.LOGTO_CLIENT_SECRET !== 'placeholder_secret_here') {
+      try {
+        const response = await fetch(`${backendApiUrl}/api/v3/identity/login/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orgSlug,
+            clientId,
+            redirectUri,
+            ...(state ? { state } : {})
+          })
+        });
+
+        const payload = await response.json();
+        if (response.ok && payload?.data?.redirectUrl) {
+          return res.json({ success: true, data: payload.data });
+        }
+      } catch (fetchErr) {
+        console.warn('⚠️ BeSuperMind remote start warning:', fetchErr.message);
+      }
+    }
+
+    // Dev/Sandbox Fallback for seamless local testing
+    const frontendUrl = process.env.FRONTEND_APP_URL || 'http://localhost:5173';
+    const mockRedirectUrl = `${frontendUrl}/#/login?mode=besupermind_dev&state=${encodeURIComponent(state || '')}&orgSlug=${encodeURIComponent(orgSlug)}`;
+    return res.json({
+      success: true,
+      data: {
+        redirectUrl: mockRedirectUrl,
+        isDevFallback: true,
+        message: 'Dev sandbox active. Live login will trigger when LOGTO_CLIENT_SECRET is provided.'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+app.post('/api/auth/start', handleBeSuperMindStart);
+app.post('/api/auth/besupermind/start', handleBeSuperMindStart);
+
+app.post('/api/auth/besupermind/mock-login', async (req, res) => {
+  try {
+    const { name, email, orgSlug = 'bceo' } = req.body;
+    const cleanEmail = (email || 'buddhaceo.tester@besupermind.com').trim().toLowerCase();
+    const displayName = name || 'BuddhaCEO Member';
+
+    let userDoc = null;
+    if (isMongoConnected) {
+      userDoc = await User.findOne({ email: cleanEmail });
+      if (userDoc) {
+        userDoc.name = displayName;
+        userDoc.authProvider = 'buddhaceo';
+        userDoc.orgSlug = orgSlug;
+        await userDoc.save();
+      } else {
+        userDoc = await User.create({
+          id: 'USR_BCEO_' + Date.now(),
+          name: displayName,
+          email: cleanEmail,
+          role: cleanEmail === 'bharathkumaraiwork@gmail.com' ? 'admin' : 'customer',
+          authProvider: 'buddhaceo',
+          orgSlug
+        });
+      }
+      syncToFiles();
+    } else {
+      userDoc = {
+        id: 'USR_BCEO_' + Date.now(),
+        name: displayName,
+        email: cleanEmail,
+        role: 'customer',
+        authProvider: 'buddhaceo',
+        orgSlug
+      };
+    }
+
+    res.json({ success: true, user: userDoc });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
+app.get('/api/auth/callback', async (req, res) => {
+  try {
+    const { code, state, error: authError, error_description } = req.query;
+    const frontendUrl = process.env.FRONTEND_APP_URL || 'http://localhost:5173';
+
+    if (authError) {
+      const msg = error_description || authError || 'Sign-in cancelled';
+      return res.redirect(`${frontendUrl}/#/?error=${encodeURIComponent(msg)}`);
+    }
+
+    if (!code) {
+      return res.redirect(`${frontendUrl}/#/?error=Missing%20authorization%20code`);
+    }
+
+    const logtoEndpoint = process.env.LOGTO_ENDPOINT || 'https://5mjf80.logto.app';
+    const clientId = process.env.PARTNER_CLIENT_ID;
+    const clientSecret = process.env.LOGTO_CLIENT_SECRET;
+    const redirectUri = process.env.PARTNER_REDIRECT_URI || 'http://localhost:5000/api/auth/callback';
+    const audience = process.env.LOGTO_API_AUDIENCE || 'https://api.besupermind.com/v3';
+    const backendApiUrl = process.env.BACKEND_API_URL || 'https://lbse6s6n81.execute-api.ap-south-1.amazonaws.com';
+
+    // 1. Exchange authorization code for tokens
+    const tokenRes = await fetch(`${logtoEndpoint}/oidc/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+        client_id: clientId,
+        client_secret: clientSecret,
+        resource: audience
+      })
+    });
+
+    const tokens = await tokenRes.json();
+    if (!tokenRes.ok || !tokens.access_token) {
+      const errMsg = tokens.error_description || tokens.error || 'Token exchange failed';
+      return res.redirect(`${frontendUrl}/#/?error=${encodeURIComponent(errMsg)}`);
+    }
+
+    // 2. Fetch User Profile from BeSuperMind
+    const userRes = await fetch(`${backendApiUrl}/api/v3/user/me`, {
+      headers: { Authorization: `Bearer ${tokens.access_token}` }
+    });
+
+    const userPayload = await userRes.json();
+    if (!userRes.ok || !userPayload.data) {
+      return res.redirect(`${frontendUrl}/#/?error=Unable%20to%20load%20profile`);
+    }
+
+    const profile = userPayload.data;
+    const cleanEmail = (profile.email || `${profile.username || 'user'}@besupermind.com`).toLowerCase();
+    const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.username || 'BuddhaCEO Member';
+
+    // 3. Sync with MongoDB
+    let dbUser = null;
+    if (isMongoConnected) {
+      dbUser = await User.findOne({ $or: [{ email: cleanEmail }, { externalId: profile.id }] });
+      if (dbUser) {
+        dbUser.name = fullName;
+        dbUser.avatar = profile.image || '';
+        dbUser.authProvider = 'buddhaceo';
+        dbUser.externalId = profile.id;
+        await dbUser.save();
+      } else {
+        dbUser = await User.create({
+          id: 'USR' + Date.now(),
+          name: fullName,
+          email: cleanEmail,
+          avatar: profile.image || '',
+          role: cleanEmail === 'bharathkumaraiwork@gmail.com' ? 'admin' : 'customer',
+          authProvider: 'buddhaceo',
+          externalId: profile.id
+        });
+      }
+      syncToFiles();
+    } else {
+      dbUser = {
+        id: 'USR' + Date.now(),
+        name: fullName,
+        email: cleanEmail,
+        avatar: profile.image || '',
+        role: 'customer',
+        authProvider: 'buddhaceo',
+        externalId: profile.id
+      };
+    }
+
+    // 4. Redirect back to KartHub with user session payload
+    const userSessionParam = encodeURIComponent(JSON.stringify(dbUser));
+    return res.redirect(`${frontendUrl}/#/account?sso_success=true&user=${userSessionParam}`);
+  } catch (err) {
+    console.error('SSO Callback error:', err);
+    const frontendUrl = process.env.FRONTEND_APP_URL || 'http://localhost:5173';
+    return res.redirect(`${frontendUrl}/#/?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+app.post('/api/auth/besupermind/mock-login', async (req, res) => {
+  try {
+    const { name = 'BuddhaCEO Member', email = 'buddhaceo.member@example.com', orgSlug = 'bceo' } = req.body;
+    const cleanEmail = email.trim().toLowerCase();
+
+    let userObj = null;
+    if (isMongoConnected) {
+      userObj = await User.findOne({ email: cleanEmail });
+      if (userObj) {
+        userObj.name = name;
+        userObj.authProvider = 'buddhaceo';
+        await userObj.save();
+      } else {
+        userObj = await User.create({
+          id: 'USR' + Date.now(),
+          name,
+          email: cleanEmail,
+          role: cleanEmail === 'bharathkumaraiwork@gmail.com' ? 'admin' : 'customer',
+          authProvider: 'buddhaceo'
+        });
+      }
+      syncToFiles();
+    } else {
+      userObj = {
+        id: 'USR' + Date.now(),
+        name,
+        email: cleanEmail,
+        role: 'customer',
+        authProvider: 'buddhaceo'
+      };
+    }
+
+    return res.json({ success: true, user: userObj });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 
 app.get('/api/users', async (req, res) => {
   try {
@@ -564,9 +860,16 @@ app.get('/api/health', async (req, res) => {
 // Serve static frontend assets from dist in production
 const distPath = path.join(__dirname, '..', 'dist');
 if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
+  app.use(express.static(distPath, {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+    }
+  }));
   app.use((req, res, next) => {
     if (!req.path.startsWith('/api')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       return res.sendFile(path.join(distPath, 'index.html'));
     }
     next();
