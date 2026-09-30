@@ -229,24 +229,66 @@ export function renderLoginPage(params, queryParams) {
     navigate('/account');
   });
 
-  document.getElementById('google-sso-btn')?.addEventListener('click', async () => {
-    showToast('Signing in with Google...', 'info');
-    try {
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'bharathkumaraiwork@gmail.com', name: 'Bharath Reddy' })
-      });
-      const json = await res.json();
-      if (json.user) {
-        localStorage.setItem('karthub_user', JSON.stringify(json.user));
-        showToast(`🎉 Signed in with Google as ${json.user.name}!`, 'success');
-        navigate('/account');
+  document.getElementById('google-sso-btn')?.addEventListener('click', () => {
+    const googleClientId = '31259564562-k8bskvd1gnk0f8ch3acv1cv3h5pheu46.apps.googleusercontent.com';
+    if (window.google?.accounts?.oauth2) {
+      try {
+        showToast('Connecting to Google...', 'info');
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: googleClientId,
+          scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
+          prompt: 'select_account',
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              showToast(`Google Sign-In: ${tokenResponse.error}`, 'error');
+              return;
+            }
+            if (tokenResponse.access_token) {
+              try {
+                const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                });
+                const googleProfile = await userinfoRes.json();
+                if (googleProfile.email) {
+                  const res = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      email: googleProfile.email,
+                      name: googleProfile.name || googleProfile.email.split('@')[0],
+                      avatar: googleProfile.picture || '',
+                      googleId: googleProfile.sub || ''
+                    })
+                  });
+                  const json = await res.json();
+                  const finalUser = json.user || {
+                    id: 'USR_G_' + Date.now(),
+                    name: googleProfile.name || googleProfile.email.split('@')[0],
+                    email: googleProfile.email,
+                    avatar: googleProfile.picture || '',
+                    role: googleProfile.email === 'bharathkumaraiwork@gmail.com' ? 'admin' : 'customer',
+                    authProvider: 'google'
+                  };
+                  localStorage.setItem('karthub_user', JSON.stringify(finalUser));
+                  showToast(`🎉 Welcome, ${finalUser.name}!`, 'success');
+                  navigate('/account');
+                }
+              } catch (err) {
+                showToast('Failed to fetch Google profile', 'error');
+              }
+            }
+          }
+        });
+        tokenClient.requestAccessToken({ prompt: 'select_account' });
         return;
+      } catch (e) {
+        console.warn('Google client error:', e);
       }
-    } catch {}
-    await login('bharathkumaraiwork@gmail.com');
-    showToast('Signed in with Google successfully!', 'success');
-    navigate('/account');
+    }
+
+    // Direct fallback
+    const redirectOrigin = window.location.origin;
+    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleClientId)}&redirect_uri=${encodeURIComponent(redirectOrigin)}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
+    window.open(oauthUrl, 'Google_Sign_In', 'width=500,height=600');
   });
 }
