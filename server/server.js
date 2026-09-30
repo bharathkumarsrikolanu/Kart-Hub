@@ -452,7 +452,9 @@ app.post('/api/auth/besupermind/mock-login', async (req, res) => {
 app.get('/api/auth/callback', async (req, res) => {
   try {
     const { code, state, error: authError, error_description } = req.query;
-    const frontendUrl = process.env.FRONTEND_APP_URL || 'http://localhost:5173';
+    const host = req.get('host') || '';
+    const isRender = host.includes('render.com') || host.includes('karthub') || Boolean(process.env.RENDER);
+    const frontendUrl = process.env.FRONTEND_APP_URL || (isRender ? 'https://kart-hub.onrender.com' : 'http://localhost:5173');
 
     if (authError) {
       const msg = error_description || authError || 'Sign-in cancelled';
@@ -463,8 +465,6 @@ app.get('/api/auth/callback', async (req, res) => {
       return res.redirect(`${frontendUrl}/#/?error=Missing%20authorization%20code`);
     }
 
-    const host = req.get('host') || '';
-    const isRender = host.includes('render.com') || host.includes('karthub') || process.env.RENDER;
     const logtoEndpoint = process.env.LOGTO_ENDPOINT || 'https://5mjf80.logto.app';
     let clientId = process.env.PARTNER_CLIENT_ID || 'bs4vogedbbvswhgxvpnrv';
     if (clientId === 'j2e4giinene26vrig6i51' || !clientId) clientId = 'bs4vogedbbvswhgxvpnrv';
@@ -552,7 +552,9 @@ app.get('/api/auth/callback', async (req, res) => {
     return res.redirect(`${frontendUrl}/#/account?sso_success=true&user=${userSessionParam}`);
   } catch (err) {
     console.error('SSO Callback error:', err);
-    const frontendUrl = process.env.FRONTEND_APP_URL || 'http://localhost:5173';
+    const host = req.get('host') || '';
+    const isRender = host.includes('render.com') || host.includes('karthub') || Boolean(process.env.RENDER);
+    const frontendUrl = process.env.FRONTEND_APP_URL || (isRender ? 'https://kart-hub.onrender.com' : 'http://localhost:5173');
     return res.redirect(`${frontendUrl}/#/?error=${encodeURIComponent(err.message)}`);
   }
 });
